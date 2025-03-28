@@ -13,5 +13,8 @@ void get_flights_data_by_period(sqlite3 *db);
 // Функция для получения налетанных часов и ресурса летного времени после капитального ремонта
 void get_flights_hours_after_repair(sqlite3 *db);
 
+// Функция для получения общего количества рейсов, массы грузов и суммы заработанных денег по спецрейсам
+void get_special_flights_summary(sqlite3 *db);
+
 #endif // COMMANDER_H
 

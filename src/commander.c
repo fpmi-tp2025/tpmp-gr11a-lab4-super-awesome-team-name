@@ -123,3 +123,37 @@ void get_flights_hours_after_repair(sqlite3 *db) {
     // Освобождение ресурсов
     sqlite3_finalize(stmt);
 }
+
+// Функция для получения общего количества рейсов, массы грузов и суммы заработанных денег по спецрейсам
+void get_special_flights_summary(sqlite3 *db) {
+    sqlite3_stmt *stmt;
+    const char *query = "SELECT h.helicopter_number, COUNT(f.flight_code), SUM(f.cargo_weight), SUM(f.flight_cost) "
+                        "FROM Flight f "
+                        "JOIN Helicopter h ON f.helicopter_number = h.helicopter_number "
+                        "WHERE f.is_special = 1 "
+                        "GROUP BY h.helicopter_number";
+
+    // Подготовка SQL-запроса
+    if (sqlite3_prepare_v2(db, query, -1, &stmt, NULL) != SQLITE_OK) {
+        printf("Ошибка при подготовке запроса: %s\n", sqlite3_errmsg(db));
+        return;
+    }
+
+    // Выполнение запроса и обработка результатов
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int helicopter_number = sqlite3_column_int(stmt, 0);
+        int flight_count = sqlite3_column_int(stmt, 1);
+        double total_cargo_weight = sqlite3_column_double(stmt, 2);
+        double total_income = sqlite3_column_double(stmt, 3);
+
+        // Выводим информацию для каждого вертолета
+        printf("Helicopter %d\n", helicopter_number);
+        printf("Количество спецрейсов: %d\n", flight_count);
+        printf("Общая масса перевезенных грузов: %.2f\n", total_cargo_weight);
+        printf("Общая сумма заработанных денег: %.2f$\n", total_income);
+        printf("\n");
+    }
+
+    // Освобождение ресурсов
+    sqlite3_finalize(stmt);
+}
