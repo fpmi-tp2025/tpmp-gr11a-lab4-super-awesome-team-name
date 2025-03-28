@@ -91,3 +91,35 @@ void get_flights_data_by_period(sqlite3 *db) {
     // Освобождение ресурсов
     sqlite3_finalize(stmt);
 }
+
+// Функция для получения налетанных часов и ресурса летного времени после капитального ремонта
+void get_flights_hours_after_repair(sqlite3 *db) {
+    sqlite3_stmt *stmt;
+    const char *query = "SELECT h.helicopter_number, SUM(f.flight_duration), h.flight_resource "
+                        "FROM Flight f "
+                        "JOIN Helicopter h ON f.helicopter_number = h.helicopter_number "
+                        "WHERE f.date > h.last_repair_date "
+                        "GROUP BY h.helicopter_number";
+
+    // Подготовка SQL-запроса
+    if (sqlite3_prepare_v2(db, query, -1, &stmt, NULL) != SQLITE_OK) {
+        printf("Ошибка при подготовке запроса: %s\n", sqlite3_errmsg(db));
+        return;
+    }
+
+    // Выполнение запроса и обработка результатов
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int helicopter_number = sqlite3_column_int(stmt, 0);
+        double total_flight_hours = sqlite3_column_double(stmt, 1);
+        int flight_resource = sqlite3_column_int(stmt, 2);
+
+        // Выводим информацию для каждого вертолета
+        printf("Helicopter %d\n", helicopter_number);
+        printf("Налетанные часы после капитального ремонта: %.2f\n", total_flight_hours);
+        printf("Ресурс летного времени: %d\n", flight_resource);
+        printf("\n");
+    }
+
+    // Освобождение ресурсов
+    sqlite3_finalize(stmt);
+}
