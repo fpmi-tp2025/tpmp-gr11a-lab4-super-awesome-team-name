@@ -1,6 +1,8 @@
 /* commander.c */
 #include <stdio.h>
+#include <stdlib.h>
 #include <sqlite3.h>
+#include <string.h>
 #include <time.h>
 #include "commander.h"
 
@@ -155,5 +157,83 @@ void get_special_flights_summary(sqlite3 *db) {
     }
 
     // Освобождение ресурсов
+    sqlite3_finalize(stmt);
+}
+
+void get_flights_by_employee(sqlite3 *db) {
+    sqlite3_stmt *stmt;
+    const char *query;
+
+    char employee_id_or_name[100];
+    printf("Введите табельный номер или фамилию: ");
+    scanf("%99s", employee_id_or_name);
+
+    int is_number = 1;
+    for (int i = 0; employee_id_or_name[i] != '\0'; ++i) {
+        if (employee_id_or_name[i] < '0' || employee_id_or_name[i] > '9') {
+            is_number = 0;
+            break;
+        }
+    }
+
+    if (is_number) {
+        query =
+                "SELECT cm.tab_number, cm.last_name, h.helicopter_number, f.date, "
+                "f.cargo_weight, f.passengers_count, f.flight_cost "
+                "FROM Crew_member cm "
+                "JOIN Helicopter h ON cm.helicopter_number = h.helicopter_number "
+                "JOIN Flight f ON f.helicopter_number = h.helicopter_number "
+                "WHERE cm.tab_number = ? "
+                "ORDER BY f.date";
+    } else {
+        query =
+                "SELECT cm.tab_number, cm.last_name, h.helicopter_number, f.date, "
+                "f.cargo_weight, f.passengers_count, f.flight_cost "
+                "FROM Crew_member cm "
+                "JOIN Helicopter h ON cm.helicopter_number = h.helicopter_number "
+                "JOIN Flight f ON f.helicopter_number = h.helicopter_number "
+                "WHERE cm.last_name = ? "
+                "ORDER BY f.date";
+    }
+
+    if (sqlite3_prepare_v2(db, query, -1, &stmt, NULL) != SQLITE_OK) {
+        printf("Ошибка при подготовке запроса: %s\n", sqlite3_errmsg(db));
+        return;
+    }
+
+    if (is_number) {
+        sqlite3_bind_int(stmt, 1, atoi(employee_id_or_name));
+    } else {
+        sqlite3_bind_text(stmt, 1, employee_id_or_name, -1, SQLITE_STATIC);
+    }
+
+    int found = 0;
+    int printed_header = 0;
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        found = 1;
+
+        int tab_number = sqlite3_column_int(stmt, 0);
+        const char *last_name = (const char *)sqlite3_column_text(stmt, 1);
+        int helicopter_number = sqlite3_column_int(stmt, 2);
+        const char *date = (const char *)sqlite3_column_text(stmt, 3);
+        double cargo_weight = sqlite3_column_double(stmt, 4);
+        int passengers_count = sqlite3_column_int(stmt, 5);
+        double flight_cost = sqlite3_column_double(stmt, 6);
+
+        if (!printed_header) {
+            printf("%d %s %d\n", tab_number, last_name, helicopter_number);
+            printf("список рейсов:\n");
+            printf("date, weight, passengers, cost:\n");
+            printed_header = 1;
+        }
+
+        printf("%s %.2f %d %.2f\n", date, cargo_weight, passengers_count, flight_cost);
+    }
+
+    if (!found) {
+        printf("Сотрудник с таким табельным номером или фамилией не найден.\n");
+    }
+
     sqlite3_finalize(stmt);
 }

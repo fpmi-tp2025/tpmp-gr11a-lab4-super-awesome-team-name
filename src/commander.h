@@ -16,5 +16,8 @@ void get_flights_hours_after_repair(sqlite3 *db);
 // Функция для получения общего количества рейсов, массы грузов и суммы заработанных денег по спецрейсам
 void get_special_flights_summary(sqlite3 *db);
 
+// Функция для получения сведений о выполненных рейсах по табельному номеру или фамилии
+void get_flights_by_employee(sqlite3 *db);
+
 #endif // COMMANDER_H
 
