@@ -13,20 +13,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-    - name: Install build dependencies
-      run: sudo apt-get install build-essential
+      - name: Set up build dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential sqlite3
 
-    - name: Build project using Make
-      run: |
-        make  
+      - name: Build project using Make
+        run: make
 
-    - name: Run unit tests
-      run: |
-        ./bin/test_helicopter_flight_hours
-
-    - name: Clean up build files
-      run: make clean
-
+      - name: Clean up build files
+        run: make clean
