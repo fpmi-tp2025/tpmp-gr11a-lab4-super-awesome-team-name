@@ -27,7 +27,7 @@ int main() {
     }
 
     sqlite3_stmt *stmt;
-    User user = {0, CREW_MEMBER}; // по умолчанию - член экипажа
+    User user = {tab_number, CREW_MEMBER}; // по умолчанию - член экипажа
 
     const char *sql = "SELECT position FROM Crew_member WHERE tab_number = ?";
 
@@ -35,6 +35,7 @@ int main() {
     rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
     if (rc != SQLITE_OK) {
         printf("Ошибка при подготовке запроса: %s\n", sqlite3_errmsg(db));
+        sqlite3_close(db);
         return 1;
     }
 
@@ -51,6 +52,15 @@ int main() {
 
     // Завершение работы с запросом
     sqlite3_finalize(stmt);
+
+    // Закрытие базы данных
+    sqlite3_close(db);
+
+    // Проверка, если пользователь не найден
+    if (user.position == CREW_MEMBER) {
+        printf("Пользователь с таким табельным номером не найден.\n");
+        return 0;  // Завершаем программу
+    }
 
     // Определяем должность и показываем соответствующий интерфейс
     if (user.position == COMMANDER) {
