@@ -22,5 +22,8 @@ void get_max_earning_crew(sqlite3 *db);
 // Информацию по вертолету и экипажу с макс кол-во рейсов
 void get_helicopter_with_most_flights(sqlite3 *db);
 
+// Данные по вертолетам проводившие обычный рейс
+void get_normal_flights_summary(sqlite3 *db);
+
 #endif // COMMANDER_H
 

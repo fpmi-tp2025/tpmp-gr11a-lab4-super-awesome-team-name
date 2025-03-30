@@ -308,3 +308,42 @@ void get_helicopter_with_most_flights(sqlite3 *db) {
 
     sqlite3_finalize(stmt);
 }
+
+// Данные по вертолетам проводившие обычный рейс
+void get_normal_flights_summary(sqlite3 *db) {
+    sqlite3_stmt *stmt;
+
+    // SQL запрос для получения информации о всех вертолетах, выполнявших обычные рейсы
+    const char *sql =
+            "SELECT H.helicopter_number, H.model, COUNT(F.flight_code) AS num_flights, "
+            "SUM(F.cargo_weight) AS total_cargo_weight, SUM(F.flight_cost) AS total_earnings "
+            "FROM Flight F "
+            "JOIN Helicopter H ON F.helicopter_number = H.helicopter_number "
+            "WHERE F.is_special = 0 "  // Отбираем только обычные рейсы (не спецрейсы)
+            "GROUP BY F.helicopter_number";  // Группируем по номеру вертолета
+
+    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
+    if (rc != SQLITE_OK) {
+        printf("Ошибка при подготовке запроса: %s\n", sqlite3_errmsg(db));
+        return;
+    }
+
+    // Обработка результатов запроса
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int helicopter_number = sqlite3_column_int(stmt, 0);
+        const char *helicopter_model = (const char*)sqlite3_column_text(stmt, 1);
+        int num_flights = sqlite3_column_int(stmt, 2);
+        double total_cargo_weight = sqlite3_column_double(stmt, 3);
+        double total_earnings = sqlite3_column_double(stmt, 4);
+
+        // Вывод информации о каждом вертолете
+        printf("Номер вертолета: %d\n", helicopter_number);
+        printf("Модель вертолета: %s\n", helicopter_model);
+        printf("Количество рейсов: %d\n", num_flights);
+        printf("Общая масса перевезенных грузов: %.2f кг\n", total_cargo_weight);
+        printf("Общее количество заработанных денег: %.2f$\n", total_earnings);
+        printf("\n");
+    }
+
+    sqlite3_finalize(stmt);
+}
