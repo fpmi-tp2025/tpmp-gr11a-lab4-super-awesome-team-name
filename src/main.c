@@ -48,28 +48,26 @@ int main() {
         if (position != NULL && strcmp(position, "commander") == 0) {
             user.position = COMMANDER;
         }
+    } else {
+        // Если пользователь не найден в базе данных, выводим сообщение
+        printf("Пользователь с таким табельным номером не найден.\n");
+        sqlite3_finalize(stmt);
+        sqlite3_close(db);
+        return 0;  // Завершаем программу
     }
 
     // Завершение работы с запросом
     sqlite3_finalize(stmt);
-
-    // Закрытие базы данных
-    sqlite3_close(db);
-
-    // Проверка, если пользователь не найден
-    if (user.position == CREW_MEMBER) {
-        printf("Пользователь с таким табельным номером не найден.\n");
-        return 0;  // Завершаем программу
-    }
 
     // Определяем должность и показываем соответствующий интерфейс
     if (user.position == COMMANDER) {
         commander_interface(db);
     } else if (user.position == CREW_MEMBER) {
         crew_member_interface(db);
-    } else {
-        printf("Пользователь с таким табельным номером не найден.\n");
     }
+
+    // Закрытие базы данных
+    sqlite3_close(db);
 
     return 0;
 }
