@@ -7,6 +7,7 @@
 void get_flights_data_by_period(sqlite3 *db);
 void get_flights_hours_after_repair(sqlite3 *db);
 void get_special_flights_summary(sqlite3 *db);
+void get_max_earning_crew(sqlite3 *db);
 
 // Интерфейс для Commander
 void commander_interface(sqlite3 *db) {
@@ -19,6 +20,7 @@ void commander_interface(sqlite3 *db) {
         printf("1. Получить данные по рейсам в указанном периоде\n");
         printf("2. Получить налетанные часы и ресурс летного времени после капитального ремонта\n");
         printf("3. Получить сводку по спецрейсам (общее количество рейсов, масса грузов, заработанные деньги)\n");
+        printf("4. Максимально заработавший экипаж\n");
         printf("0. Выйти\n");
         printf("Введите ваш выбор: ");
         scanf("%d", &choice);
@@ -33,6 +35,8 @@ void commander_interface(sqlite3 *db) {
             case 3:
                 get_special_flights_summary(db);  // Вызов функции для получения сводки по спецрейсам
                 break;
+            case 4:
+                get_max_earning_crew(db);
             case 0:
                 printf("Выход из программы.\n");
                 return;  // Завершаем цикл и выходим из интерфейса
