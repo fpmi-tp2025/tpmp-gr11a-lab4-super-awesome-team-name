@@ -63,7 +63,7 @@ int main() {
     if (user.position == COMMANDER) {
         commander_interface(db);
     } else if (user.position == CREW_MEMBER) {
-        crew_member_interface(db);
+        crew_member_interface(db, tab_number);
     }
 
     // Закрытие базы данных
