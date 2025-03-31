@@ -98,3 +98,27 @@ int validate_is_special(const char *input) {
     }
     return -1;  // некорректное значение
 }
+
+// Функция для проверки существования flight_code в базе данных
+int validate_flight_code(sqlite3 *db, int flight_code) {
+    sqlite3_stmt *stmt;
+    const char *sql = "SELECT COUNT(*) FROM Flight WHERE flight_code = ?";
+
+    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
+    if (rc != SQLITE_OK) {
+        printf("Ошибка при подготовке запроса: %s\n", sqlite3_errmsg(db));
+        return 0;
+    }
+
+    sqlite3_bind_int(stmt, 1, flight_code);
+
+    int count = 0;
+    rc = sqlite3_step(stmt);
+    if (rc == SQLITE_ROW) {
+        count = sqlite3_column_int(stmt, 0);
+    }
+
+    sqlite3_finalize(stmt);
+
+    return (count > 0);  // Если flight_code существует в базе
+}

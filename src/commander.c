@@ -429,3 +429,165 @@ int update_crew_member(sqlite3 *db) {
     sqlite3_finalize(stmt);
     return 0;
 }
+
+// Обновить данные о рейсе
+int update_flight(sqlite3 *db) {
+    int flight_code;
+    char field[50];
+    char new_value[100];
+    char sql[256];
+
+    // Запрос flight_code для выбора рейса
+    while (1) {
+        printf("Введите код полета (flight_code): ");
+        scanf("%d", &flight_code);
+
+        // Проверка, существует ли такой рейс
+        if (!validate_flight_code(db, flight_code)) {
+            printf("Ошибка: рейс с таким кодом не найден. Попробуйте снова.\n");
+        } else {
+            break;  // Если рейс найден, выходим из цикла
+        }
+    }
+
+    // Запрос выбора поля для обновления
+    while (1) {
+        printf("Выберите поле для обновления:\n");
+        printf("1. cargo_weight\n");
+        printf("2. helicopter_number\n");
+        printf("3. passengers_count\n");
+        printf("4. flight_duration\n");
+        printf("5. flight_cost\n");
+        printf("6. is_special (0, 1, нет, да)\n");
+        printf("Введите название поля: ");
+        scanf("%s", field);
+
+        // Проверка, существует ли выбранное поле
+        if (
+                strcmp(field, "cargo_weight") == 0 ||
+                strcmp(field, "helicopter_number") == 0 ||
+                strcmp(field, "passengers_count") == 0 ||
+                strcmp(field, "flight_duration") == 0 ||
+                strcmp(field, "flight_cost") == 0 ||
+                strcmp(field, "is_special") == 0
+                ) {
+            break;  // Если поле валидное, выходим из цикла
+        } else {
+            printf("Ошибка: неверное поле. Попробуйте снова.\n");
+        }
+    }
+
+    // Запрос нового значения для этого поля
+    printf("Введите новое значение для поля %s: ", field);
+    scanf("%s", new_value);
+
+    // === ВАЛИДАЦИЯ ПО ПОЛЮ ===
+
+    if (strcmp(field, "cargo_weight") == 0) {
+        if (!validate_float(new_value)) {
+            printf("Ошибка: некорректный формат числа с плавающей точкой.\n");
+            return 1;
+        }
+        float weight = atof(new_value);
+
+        // Получаем максимальную массу для вертолета рейса
+        sqlite3_stmt *stmt;
+        const char *sql_get_heli = "SELECT helicopter_number FROM Flight WHERE flight_code = ?";
+        if (sqlite3_prepare_v2(db, sql_get_heli, -1, &stmt, 0) != SQLITE_OK) {
+            printf("Ошибка запроса: %s\n", sqlite3_errmsg(db));
+            return 1;
+        }
+
+        sqlite3_bind_int(stmt, 1, flight_code);
+        int heli_num = -1;
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            heli_num = sqlite3_column_int(stmt, 0);
+        }
+        sqlite3_finalize(stmt);
+
+        if (heli_num == -1) {
+            printf("Ошибка: рейс не найден.\n");
+            return 1;
+        }
+
+        // Получаем max_payload
+        const char *sql_payload = "SELECT max_payload FROM Helicopter WHERE helicopter_number = ?";
+        if (sqlite3_prepare_v2(db, sql_payload, -1, &stmt, 0) != SQLITE_OK) {
+            printf("Ошибка запроса: %s\n", sqlite3_errmsg(db));
+            return 1;
+        }
+
+        sqlite3_bind_int(stmt, 1, heli_num);
+        float max_payload = 0;
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            max_payload = sqlite3_column_double(stmt, 0);
+        }
+        sqlite3_finalize(stmt);
+
+        if (weight > max_payload) {
+            printf("Ошибка: груз превышает максимальную грузоподъемность вертолета (%.2f).\n", max_payload);
+            return 1;
+        }
+
+    } else if (strcmp(field, "helicopter_number") == 0) {
+        int h = atoi(new_value);
+        if (!validate_helicopter_number(db, h)) {
+            printf("Ошибка: вертолет с номером %d не найден.\n", h);
+            return 1;
+        }
+
+    } else if (
+            strcmp(field, "passengers_count") == 0 ||
+            strcmp(field, "flight_duration") == 0 ||
+            strcmp(field, "flight_cost") == 0
+            ) {
+        if (!validate_float(new_value)) {
+            printf("Ошибка: введите корректное число.\n");
+            return 1;
+        }
+
+    } else if (strcmp(field, "is_special") == 0) {
+        int val = validate_is_special(new_value);
+        if (val == -1) {
+            printf("Ошибка: значение может быть только 0, 1, нет, да.\n");
+            return 1;
+        }
+        // Перезаписываем new_value числовым значением
+        snprintf(new_value, sizeof(new_value), "%d", val);
+
+    } else {
+        printf("Ошибка: поле \"%s\" не поддерживается для обновления.\n", field);
+        return 1;
+    }
+
+    // === ОБНОВЛЕНИЕ В БАЗЕ ===
+
+    snprintf(sql, sizeof(sql), "UPDATE Flight SET %s = ? WHERE flight_code = ?", field);
+    sqlite3_stmt *stmt;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) != SQLITE_OK) {
+        printf("Ошибка подготовки запроса: %s\n", sqlite3_errmsg(db));
+        return 1;
+    }
+
+    // Привязка значения
+    if (strcmp(field, "cargo_weight") == 0 || strcmp(field, "flight_cost") == 0) {
+        sqlite3_bind_double(stmt, 1, atof(new_value));
+    } else if (strcmp(field, "is_special") == 0 ||
+               strcmp(field, "passengers_count") == 0 ||
+               strcmp(field, "flight_duration") == 0 ||
+               strcmp(field, "helicopter_number") == 0) {
+        sqlite3_bind_int(stmt, 1, atoi(new_value));
+    }
+
+    sqlite3_bind_int(stmt, 2, flight_code);
+
+    if (sqlite3_step(stmt) != SQLITE_DONE) {
+        printf("Ошибка при обновлении: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        return 1;
+    }
+
+    printf("Поле \"%s\" успешно обновлено.\n", field);
+    sqlite3_finalize(stmt);
+    return 0;
+}

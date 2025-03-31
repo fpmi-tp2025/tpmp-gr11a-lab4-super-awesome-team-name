@@ -3,7 +3,7 @@
 #include "interface.h"
 #include <stdio.h>
 
-// Объявления функций, которые уже реализованы в commander.c
+// SELECT
 void get_flights_data_by_period(sqlite3 *db);
 void get_flights_hours_after_repair(sqlite3 *db);
 void get_special_flights_summary(sqlite3 *db);
@@ -11,7 +11,9 @@ void get_max_earning_crew(sqlite3 *db);
 void get_helicopter_with_most_flights(sqlite3 *db);
 void get_normal_flights_summary(sqlite3 *db);
 
+// UPDATE
 int update_crew_member(sqlite3 *db);
+int update_flight(sqlite3 *db);
 
 // Интерфейс для Commander
 void commander_interface(sqlite3 *db) {
@@ -73,6 +75,8 @@ void commander_interface(sqlite3 *db) {
                 while (1) {
                     printf("\nВы выбрали UPDATE.\n");
                     printf("1. Обновить данные члена экипажа\n");
+                    printf("2. Обновить данные о рейсе\n");
+                    printf("3. Обновить данные о вертолете\n");
                     printf("0. Вернуться в главное меню\n");
                     printf("Введите ваш выбор: ");
                     scanf("%d", &choice);
@@ -82,6 +86,9 @@ void commander_interface(sqlite3 *db) {
                     switch (choice) {
                         case 1:
                             update_crew_member(db);
+                            break;
+                        case 2:
+                            update_flight(db);
                             break;
                         default:
                             printf("Неверный выбор. Попробуйте снова.\n");

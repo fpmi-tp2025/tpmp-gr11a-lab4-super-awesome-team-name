@@ -25,5 +25,8 @@ void get_normal_flights_summary(sqlite3 *db);
 // Обновить данные экипажа
 int update_crew_member(sqlite3 *db);
 
+// Обновить данные о рейсе
+int update_flight(sqlite3 *db);
+
 #endif // COMMANDER_H
 

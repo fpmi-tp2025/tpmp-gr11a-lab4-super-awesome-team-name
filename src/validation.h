@@ -28,4 +28,7 @@ int validate_float(const char *str);
 // Функция для проверки yes/no значения для is_special
 int validate_is_special(const char *input);
 
+// Функция для проверки существования flight_code в базе данных
+int validate_flight_code(sqlite3 *db, int flight_code);
+
 #endif //TEAM_LAB4_VALIDATION_H
