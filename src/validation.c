@@ -61,3 +61,40 @@ int validate_helicopter_number(sqlite3 *db, int helicopter_number) {
 
     return (count > 0);
 }
+
+// Проверка числового значения
+int validate_number(const char *str) {
+    while (*str) {
+        if (*str < '0' || *str > '9') {
+            return 0; // не число
+        }
+        str++;
+    }
+    return 1; // число
+}
+
+// Проверка для чисел с плавающей точкой
+int validate_float(const char *str) {
+    int dot_count = 0;
+    while (*str) {
+        if (*str == '.') {
+            dot_count++;
+            if (dot_count > 1) return 0; // более одной точки
+        } else if (*str < '0' || *str > '9') {
+            return 0; // не число
+        }
+        str++;
+    }
+    return 1; // корректное число с плавающей точкой
+}
+
+// Проверка корректности yes/no значения для is_special
+int validate_is_special(const char *input) {
+    if (strcmp(input, "0") == 0 || strcmp(input, "нет") == 0) {
+        return 0;  // обычный рейс
+    }
+    if (strcmp(input, "1") == 0 || strcmp(input, "да") == 0) {
+        return 1;  // спецрейс
+    }
+    return -1;  // некорректное значение
+}

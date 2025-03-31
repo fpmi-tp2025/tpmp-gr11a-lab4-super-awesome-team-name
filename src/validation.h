@@ -4,19 +4,28 @@
 
 #include <sqlite3.h>
 
-// Функция для проверки, является ли строка валидным именем
-int validate_name(const char *name);
+// Функция для проверки наличия вертолета в базе данных
+int validate_helicopter_number(sqlite3 *db, int helicopter_number);
 
 // Функция для проверки корректности формата даты (YYYY-MM-DD)
 int validate_date(const char *date_str);
 
-// Функция для проверки корректности значения для позиции (commander или crew_member)
+// Функция для проверки, является ли строка валидным именем
+int validate_name(const char *name);
+
+// Функция для проверки позиции (commander или crew_member)
 int validate_position(const char *position);
 
-// Функция для проверки корректности года рождения (должен быть 4 цифры)
+// Функция для проверки корректности года рождения
 int validate_birth_year(const char *year_str);
 
-// Функция для проверки наличия вертолета в базе данных
-int validate_helicopter_number(sqlite3 *db, int helicopter_number);
+// Функция для проверки, является ли строка числом
+int validate_number(const char *str);
+
+// Функция для проверки, является ли строка числом с плавающей точкой
+int validate_float(const char *str);
+
+// Функция для проверки yes/no значения для is_special
+int validate_is_special(const char *input);
 
 #endif //TEAM_LAB4_VALIDATION_H
