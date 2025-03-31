@@ -1,9 +1,21 @@
 /* commander.c */
 #include <stdio.h>
 #include <sqlite3.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include "commander.h"
+
+// Функция для проверки, является ли строка валидным именем
+int validate_name(const char *name) {
+    while (*name) {
+        if ((*name < 'A' || *name > 'Z') && (*name < 'a' || *name > 'z')) {
+            return 0;
+        }
+        name++;
+    }
+    return 1;
+}
 
 // Функция для проверки корректности формата даты (YYYY-MM-DD)
 int validate_date(const char *date_str) {
@@ -18,7 +30,7 @@ int validate_position(const char *position) {
 
 // Функция для проверки корректности года рождения (должен быть 4 цифры)
 int validate_birth_year(const char *year_str) {
-    if (strlen(year_str) != 4) return 0;  // Год должен быть 4 цифры
+    if (strlen(year_str) != 4) return 0;
     for (int i = 0; i < 4; i++) {
         if (year_str[i] < '0' || year_str[i] > '9') {
             return 0;
@@ -50,8 +62,6 @@ int validate_helicopter_number(sqlite3 *db, int helicopter_number) {
 
     return (count > 0);
 }
-
-
 
 // Функция для преобразования строки в дату (структура tm)
 struct tm string_to_date(const char *date_str) {
@@ -389,4 +399,89 @@ void get_normal_flights_summary(sqlite3 *db) {
     }
 
     sqlite3_finalize(stmt);
+}
+
+int update_crew_member(sqlite3 *db) {
+    int tab_number;
+    char field[50];
+    char new_value[100];
+    int new_helicopter_number;
+
+    // Запрос табельного номера
+    printf("Введите табельный номер члена экипажа для обновления: ");
+    scanf("%d", &tab_number);
+
+    // Запрос, какое поле нужно изменить
+    printf("Какое поле хотите изменить? (last_name, position, birth_year, address, helicopter_number): ");
+    scanf("%s", field);
+
+    // Запрос нового значения для этого поля
+    printf("Введите новое значение для поля %s: ", field);
+    scanf("%s", new_value);
+
+    // Валидация данных в зависимости от поля
+    if (strcmp(field, "last_name") == 0) {
+        // Проверка фамилии (должна быть строкой)
+        if (!validate_name(new_value)) {
+            printf("Некорректная фамилия. Используйте только буквы.\n");
+            return 1;
+        }
+    } else if (strcmp(field, "position") == 0) {
+        // Проверка должности (должна быть "commander" или "crew_member")
+        if (!validate_position(new_value)) {
+            printf("Некорректная должность. Должна быть либо 'commander', либо 'crew_member'.\n");
+            return 1;
+        }
+    } else if (strcmp(field, "birth_year") == 0) {
+        // Проверка года рождения (должен быть 4 цифры)
+        if (!validate_birth_year(new_value)) {
+            printf("Некорректный год рождения. Пожалуйста, введите 4 цифры.\n");
+            return 1;
+        }
+    } else if (strcmp(field, "address") == 0) {
+        // Адрес не требует сложной валидации в нашем примере
+    } else if (strcmp(field, "helicopter_number") == 0) {
+        // Проверка наличия вертолета в базе данных
+        new_helicopter_number = atoi(new_value);  // Преобразуем строку в целое число
+        if (!validate_helicopter_number(db, new_helicopter_number)) {
+            printf("Вертолет с таким номером не существует в базе данных.\n");
+            return 1;
+        }
+    } else {
+        printf("Некорректное поле.\n");
+        return 1;
+    }
+
+    // Формирование SQL запроса для обновления данных
+    char sql[256];
+    snprintf(sql, sizeof(sql), "UPDATE Crew_member SET %s = ? WHERE tab_number = ?", field);
+
+    sqlite3_stmt *stmt;
+    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
+    if (rc != SQLITE_OK) {
+        printf("Ошибка при подготовке запроса: %s\n", sqlite3_errmsg(db));
+        return 1;
+    }
+
+    // Привязка параметров
+    if (strcmp(field, "helicopter_number") == 0) {
+        sqlite3_bind_int(stmt, 1, new_helicopter_number);
+    } else {
+        sqlite3_bind_text(stmt, 1, new_value, -1, SQLITE_STATIC);
+    }
+    sqlite3_bind_int(stmt, 2, tab_number);
+
+    // Выполнение запроса
+    rc = sqlite3_step(stmt);
+    if (rc != SQLITE_DONE) {
+        printf("Ошибка при выполнении запроса: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        return 1;
+    }
+
+    printf("Данные успешно обновлены.\n");
+
+    // Завершаем работу с запросом
+    sqlite3_finalize(stmt);
+    return 0;
 }

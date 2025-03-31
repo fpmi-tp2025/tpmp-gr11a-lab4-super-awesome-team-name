@@ -11,6 +11,8 @@ void get_max_earning_crew(sqlite3 *db);
 void get_helicopter_with_most_flights(sqlite3 *db);
 void get_normal_flights_summary(sqlite3 *db);
 
+int update_crew_member(sqlite3 *db);
+
 // Интерфейс для Commander
 void commander_interface(sqlite3 *db) {
     int choice;
@@ -65,30 +67,57 @@ void commander_interface(sqlite3 *db) {
                             printf("Неверный выбор. Попробуйте снова.\n");
                     }
                 }
-                break;
+                break;  // Возврат в главное меню после выхода из подменю SELECT
 
             case 2:  // Если выбрано UPDATE
-                printf("\nВы выбрали UPDATE.\n");
-                // Пока заглушка
-                printf("Функция обновления данных пока не реализована.\n");
-                break;
+                while (1) {
+                    printf("\nВы выбрали UPDATE.\n");
+                    printf("1. Обновить данные члена экипажа\n");
+                    printf("0. Вернуться в главное меню\n");
+                    printf("Введите ваш выбор: ");
+                    scanf("%d", &choice);
+
+                    if (choice == 0) break;  // Выход в главное меню
+
+                    switch (choice) {
+                        case 1:
+                            update_crew_member(db);
+                            break;
+                        default:
+                            printf("Неверный выбор. Попробуйте снова.\n");
+                    }
+                }
+                break;  // Возврат в главное меню после выхода из подменю UPDATE
 
             case 3:  // Если выбрано DELETE
-                printf("\nВы выбрали DELETE.\n");
-                // Пока заглушка
-                printf("Функция удаления данных пока не реализована.\n");
-                break;
+                while (1) {
+                    printf("\nВы выбрали DELETE.\n");
+                    printf("1. Ничего не реализовано\n");
+                    printf("0. Вернуться в главное меню\n");
+                    printf("Введите ваш выбор: ");
+                    scanf("%d", &choice);
 
-            case 0:  // Выход из программы
+                    if (choice == 0) break;  // Выход в главное меню
+
+                    switch (choice) {
+                        case 1:
+                            printf("Заглушка\n");
+                            break;
+                        default:
+                            printf("Неверный выбор. Попробуйте снова.\n");
+                    }
+                }
+                break;  // Возврат в главное меню после выхода из подменю DELETE
+
+            case 0:
                 printf("Выход из программы.\n");
-                return;
+                return;  // Завершаем программу
 
             default:
                 printf("Неверный выбор. Попробуйте снова.\n");
         }
     }
 }
-
 
 // Интерфейс для Crew Member
 void crew_member_interface(sqlite3 *db) {
