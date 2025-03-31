@@ -25,6 +25,7 @@ void commander_interface(sqlite3 *db) {
         printf("Выберите операцию с базой данных:\n");
         printf("1. SELECT (Просмотр данных)\n");
         printf("2. UPDATE (Обновление данных)\n");
+        printf("4. INSERT (Добавление данных)\n");
         printf("3. DELETE (Удаление данных)\n");
         printf("0. Выйти\n");
         printf("Введите ваш выбор: ");
@@ -99,7 +100,27 @@ void commander_interface(sqlite3 *db) {
                 }
                 break;  // Возврат в главное меню после выхода из подменю UPDATE
 
-            case 3:  // Если выбрано DELETE
+            case 3: // Если выбрано INSERT
+                while (1) {
+                    printf("\nВы выбрали INSERT.\n");
+                    printf("1. Ничего не реализовано\n");
+                    printf("0. Вернуться в главное меню\n");
+                    printf("Введите ваш выбор: ");
+                    scanf("%d", &choice);
+
+                    if (choice == 0) break;
+
+                    switch (choice) {
+                        case 1:
+                            printf("Заглушка\n");
+                            break;
+                        default:
+                            printf("Неверный выбор. Попробуйте снова.\n");
+                    }
+                }
+                break;
+
+            case 4:  // Если выбрано DELETE
                 while (1) {
                     printf("\nВы выбрали DELETE.\n");
                     printf("1. Ничего не реализовано\n");
@@ -107,7 +128,7 @@ void commander_interface(sqlite3 *db) {
                     printf("Введите ваш выбор: ");
                     scanf("%d", &choice);
 
-                    if (choice == 0) break;  // Выход в главное меню
+                    if (choice == 0) break;
 
                     switch (choice) {
                         case 1:

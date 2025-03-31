@@ -3,7 +3,7 @@ CC = gcc
 CFLAGS = -Wall -std=c99
 
 # Имя исполнимого файла
-TARGET = helicopter_flights
+TARGET = main
 
 # Исходные файлы
 SRC = src/main.c src/commander.c src/crew.c src/interface.c src/validation.c
