@@ -28,5 +28,7 @@ int update_crew_member(sqlite3 *db);
 // Обновить данные о рейсе
 int update_flight(sqlite3 *db);
 
-#endif // COMMANDER_H
+// Обновить данные по вертолетам
+int update_helicopter(sqlite3 *db);
 
+#endif // COMMANDER_H

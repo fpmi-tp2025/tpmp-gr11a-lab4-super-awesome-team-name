@@ -591,3 +591,91 @@ int update_flight(sqlite3 *db) {
     sqlite3_finalize(stmt);
     return 0;
 }
+
+// Обновить данные по вертолетам
+int update_helicopter(sqlite3 *db) {
+    int helicopter_number;
+    char field[50];
+    char new_value[100];
+    char sql[256];
+
+    // Запрос helicopter_number
+    printf("Введите номер вертолета для обновления: ");
+    scanf("%d", &helicopter_number);
+
+    // Проверка существования вертолета
+    if (!validate_helicopter_number(db, helicopter_number)) {
+        printf("Ошибка: вертолет с номером %d не найден.\n", helicopter_number);
+        return 1;
+    }
+
+    // Запрос выбора поля для обновления
+    printf("Выберите поле для обновления:\n");
+    printf("1. model\n");
+    printf("2. manufacture_date\n");
+    printf("3. max_payload\n");
+    printf("4. last_repair_date\n");
+    printf("5. flight_resource\n");
+    printf("Введите название поля: ");
+    scanf("%s", field);
+
+    // Запрос нового значения для этого поля
+    printf("Введите новое значение для поля %s: ", field);
+    scanf("%s", new_value);
+
+    // === ВАЛИДАЦИЯ ПО ПОЛЮ ===
+
+    if (strcmp(field, "model") == 0) {
+        // Проверка модели (строка)
+        if (!validate_name(new_value)) {
+            printf("Ошибка: некорректная модель. Используйте только буквы.\n");
+            return 1;
+        }
+    } else if (strcmp(field, "manufacture_date") == 0 || strcmp(field, "last_repair_date") == 0) {
+        // Проверка даты
+        if (!validate_date(new_value)) {
+            printf("Ошибка: некорректная дата. Используйте формат YYYY-MM-DD.\n");
+            return 1;
+        }
+    } else if (strcmp(field, "max_payload") == 0 || strcmp(field, "flight_resource") == 0) {
+        // Проверка числовых значений
+        if (!validate_float(new_value)) {
+            printf("Ошибка: некорректное число. Введите корректное числовое значение.\n");
+            return 1;
+        }
+    } else {
+        printf("Ошибка: поле \"%s\" не поддерживается для обновления.\n", field);
+        return 1;
+    }
+
+    // === ОБНОВЛЕНИЕ В БАЗЕ ===
+
+    snprintf(sql, sizeof(sql), "UPDATE Helicopter SET %s = ? WHERE helicopter_number = ?", field);
+    sqlite3_stmt *stmt;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) != SQLITE_OK) {
+        printf("Ошибка подготовки запроса: %s\n", sqlite3_errmsg(db));
+        return 1;
+    }
+
+    // Привязка значений
+    if (strcmp(field, "model") == 0) {
+        sqlite3_bind_text(stmt, 1, new_value, -1, SQLITE_STATIC);
+    } else if (strcmp(field, "manufacture_date") == 0 || strcmp(field, "last_repair_date") == 0) {
+        sqlite3_bind_text(stmt, 1, new_value, -1, SQLITE_STATIC);
+    } else if (strcmp(field, "max_payload") == 0 || strcmp(field, "flight_resource") == 0) {
+        sqlite3_bind_double(stmt, 1, atof(new_value));
+    }
+
+    sqlite3_bind_int(stmt, 2, helicopter_number);
+
+    if (sqlite3_step(stmt) != SQLITE_DONE) {
+        printf("Ошибка при обновлении: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        return 1;
+    }
+
+    printf("Данные успешно обновлены.\n");
+
+    sqlite3_finalize(stmt);
+    return 0;
+}

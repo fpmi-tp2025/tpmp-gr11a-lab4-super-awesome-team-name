@@ -66,11 +66,11 @@ int validate_helicopter_number(sqlite3 *db, int helicopter_number) {
 int validate_number(const char *str) {
     while (*str) {
         if (*str < '0' || *str > '9') {
-            return 0; // не число
+            return 0;
         }
         str++;
     }
-    return 1; // число
+    return 1;
 }
 
 // Проверка для чисел с плавающей точкой
@@ -79,24 +79,24 @@ int validate_float(const char *str) {
     while (*str) {
         if (*str == '.') {
             dot_count++;
-            if (dot_count > 1) return 0; // более одной точки
+            if (dot_count > 1) return 0;
         } else if (*str < '0' || *str > '9') {
-            return 0; // не число
+            return 0;
         }
         str++;
     }
-    return 1; // корректное число с плавающей точкой
+    return 1;
 }
 
 // Проверка корректности yes/no значения для is_special
 int validate_is_special(const char *input) {
     if (strcmp(input, "0") == 0 || strcmp(input, "нет") == 0) {
-        return 0;  // обычный рейс
+        return 0;
     }
     if (strcmp(input, "1") == 0 || strcmp(input, "да") == 0) {
-        return 1;  // спецрейс
+        return 1;
     }
-    return -1;  // некорректное значение
+    return -1;
 }
 
 // Функция для проверки существования flight_code в базе данных
@@ -120,5 +120,5 @@ int validate_flight_code(sqlite3 *db, int flight_code) {
 
     sqlite3_finalize(stmt);
 
-    return (count > 0);  // Если flight_code существует в базе
+    return (count > 0);
 }

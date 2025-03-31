@@ -14,6 +14,7 @@ void get_normal_flights_summary(sqlite3 *db);
 // UPDATE
 int update_crew_member(sqlite3 *db);
 int update_flight(sqlite3 *db);
+int update_helicopter(sqlite3 *db);
 
 // Интерфейс для Commander
 void commander_interface(sqlite3 *db) {
@@ -90,6 +91,8 @@ void commander_interface(sqlite3 *db) {
                         case 2:
                             update_flight(db);
                             break;
+                        case 3:
+                            update_helicopter(db);
                         default:
                             printf("Неверный выбор. Попробуйте снова.\n");
                     }
