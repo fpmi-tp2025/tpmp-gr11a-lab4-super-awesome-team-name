@@ -6,7 +6,7 @@ CFLAGS = -Wall -std=c99
 TARGET = helicopter_flights
 
 # Исходные файлы
-SRC = src/main.c src/commander.c src/crew.c src/interface.c
+SRC = src/main.c src/commander.c src/crew.c src/interface.c src/validation.c
 
 # Библиотеки
 LIBS = -lsqlite3
