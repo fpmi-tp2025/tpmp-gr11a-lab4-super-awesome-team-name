@@ -4,9 +4,6 @@
 
 #include <sqlite3.h>
 
-// Функция для проверки корректности формата даты (YYYY-MM-DD)
-int validate_date(const char *date_str);
-
 // Функция для получения и вывода данных по рейсам в указанном периоде
 void get_flights_data_by_period(sqlite3 *db);
 
@@ -24,6 +21,12 @@ void get_helicopter_with_most_flights(sqlite3 *db);
 
 // Данные по вертолетам проводившие обычный рейс
 void get_normal_flights_summary(sqlite3 *db);
+
+// Обновить данные экипажа
+int update_crew_member(sqlite3 *db);
+
+// Обновить данные о рейсе
+int update_flight(sqlite3 *db);
 
 #endif // COMMANDER_H
 
