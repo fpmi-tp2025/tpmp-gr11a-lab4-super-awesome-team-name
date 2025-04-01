@@ -31,4 +31,7 @@ int update_flight(sqlite3 *db);
 // Обновить данные по вертолетам
 int update_helicopter(sqlite3 *db);
 
+// Вставка работника в БД
+int insert_crew_member(sqlite3 *db);
+
 #endif // COMMANDER_H

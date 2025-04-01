@@ -16,6 +16,9 @@ int update_crew_member(sqlite3 *db);
 int update_flight(sqlite3 *db);
 int update_helicopter(sqlite3 *db);
 
+// INSERT
+int insert_crew_member(sqlite3 *db);
+
 // Интерфейс для Commander
 void commander_interface(sqlite3 *db) {
     int choice;
@@ -25,8 +28,8 @@ void commander_interface(sqlite3 *db) {
         printf("Выберите операцию с базой данных:\n");
         printf("1. SELECT (Просмотр данных)\n");
         printf("2. UPDATE (Обновление данных)\n");
-        printf("4. INSERT (Добавление данных)\n");
-        printf("3. DELETE (Удаление данных)\n");
+        printf("3. INSERT (Добавление данных)\n");
+        printf("4. DELETE (Удаление данных)\n");
         printf("0. Выйти\n");
         printf("Введите ваш выбор: ");
         scanf("%d", &choice);
@@ -103,7 +106,7 @@ void commander_interface(sqlite3 *db) {
             case 3: // Если выбрано INSERT
                 while (1) {
                     printf("\nВы выбрали INSERT.\n");
-                    printf("1. Ничего не реализовано\n");
+                    printf("1. Добавить работника\n");
                     printf("0. Вернуться в главное меню\n");
                     printf("Введите ваш выбор: ");
                     scanf("%d", &choice);
@@ -112,7 +115,7 @@ void commander_interface(sqlite3 *db) {
 
                     switch (choice) {
                         case 1:
-                            printf("Заглушка\n");
+                            insert_crew_member(db);
                             break;
                         default:
                             printf("Неверный выбор. Попробуйте снова.\n");
