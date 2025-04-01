@@ -591,3 +591,243 @@ int update_flight(sqlite3 *db) {
     sqlite3_finalize(stmt);
     return 0;
 }
+
+// Обновить данные по вертолетам
+int update_helicopter(sqlite3 *db) {
+    int helicopter_number;
+    char field[50];
+    char new_value[100];
+    char sql[256];
+
+    // Запрос helicopter_number
+    printf("Введите номер вертолета для обновления: ");
+    scanf("%d", &helicopter_number);
+
+    // Проверка существования вертолета
+    if (!validate_helicopter_number(db, helicopter_number)) {
+        printf("Ошибка: вертолет с номером %d не найден.\n", helicopter_number);
+        return 1;
+    }
+
+    // Запрос выбора поля для обновления
+    printf("Выберите поле для обновления:\n");
+    printf("1. model\n");
+    printf("2. manufacture_date\n");
+    printf("3. max_payload\n");
+    printf("4. last_repair_date\n");
+    printf("5. flight_resource\n");
+    printf("Введите название поля: ");
+    scanf("%s", field);
+
+    // Запрос нового значения для этого поля
+    printf("Введите новое значение для поля %s: ", field);
+    scanf("%s", new_value);
+
+    // === ВАЛИДАЦИЯ ПО ПОЛЮ ===
+
+    if (strcmp(field, "model") == 0) {
+        // Проверка модели (строка)
+        if (!validate_name(new_value)) {
+            printf("Ошибка: некорректная модель. Используйте только буквы.\n");
+            return 1;
+        }
+    } else if (strcmp(field, "manufacture_date") == 0 || strcmp(field, "last_repair_date") == 0) {
+        // Проверка даты
+        if (!validate_date(new_value)) {
+            printf("Ошибка: некорректная дата. Используйте формат YYYY-MM-DD.\n");
+            return 1;
+        }
+    } else if (strcmp(field, "max_payload") == 0 || strcmp(field, "flight_resource") == 0) {
+        // Проверка числовых значений
+        if (!validate_float(new_value)) {
+            printf("Ошибка: некорректное число. Введите корректное числовое значение.\n");
+            return 1;
+        }
+    } else {
+        printf("Ошибка: поле \"%s\" не поддерживается для обновления.\n", field);
+        return 1;
+    }
+
+    // === ОБНОВЛЕНИЕ В БАЗЕ ===
+
+    snprintf(sql, sizeof(sql), "UPDATE Helicopter SET %s = ? WHERE helicopter_number = ?", field);
+    sqlite3_stmt *stmt;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) != SQLITE_OK) {
+        printf("Ошибка подготовки запроса: %s\n", sqlite3_errmsg(db));
+        return 1;
+    }
+
+    // Привязка значений
+    if (strcmp(field, "model") == 0) {
+        sqlite3_bind_text(stmt, 1, new_value, -1, SQLITE_STATIC);
+    } else if (strcmp(field, "manufacture_date") == 0 || strcmp(field, "last_repair_date") == 0) {
+        sqlite3_bind_text(stmt, 1, new_value, -1, SQLITE_STATIC);
+    } else if (strcmp(field, "max_payload") == 0 || strcmp(field, "flight_resource") == 0) {
+        sqlite3_bind_double(stmt, 1, atof(new_value));
+    }
+
+    sqlite3_bind_int(stmt, 2, helicopter_number);
+
+    if (sqlite3_step(stmt) != SQLITE_DONE) {
+        printf("Ошибка при обновлении: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        return 1;
+    }
+
+    printf("Данные успешно обновлены.\n");
+
+    sqlite3_finalize(stmt);
+    return 0;
+}
+
+// Вставка работника в БД
+int insert_crew_member(sqlite3 *db) {
+    int tab_number, birth_year, experience_year, helicopter_number;
+    char last_name[100], position[50], address[200];
+    char input[100];
+
+    // === tab_number ===
+    while (1) {
+        printf("Введите табельный номер (целое положительное число): ");
+        scanf("%s", input);
+        if (validate_number(input)) {
+            tab_number = atoi(input);
+            break;
+        } else {
+            printf("Ошибка: некорректный табельный номер.\n");
+        }
+    }
+
+    // === last_name ===
+    while (1) {
+        printf("Введите фамилию (только буквы): ");
+        scanf("%s", last_name);
+        if (validate_name(last_name)) {
+            break;
+        } else {
+            printf("Ошибка: фамилия должна содержать только буквы.\n");
+        }
+    }
+
+    // === position ===
+    while (1) {
+        printf("Введите должность (commander или crew_member): ");
+        scanf("%s", position);
+        if (validate_position(position)) {
+            break;
+        } else {
+            printf("Ошибка: допустимые значения – commander или crew_member.\n");
+        }
+    }
+
+    // === birth_year ===
+    while (1) {
+        printf("Введите год рождения (4 цифры): ");
+        scanf("%s", input);
+        if (validate_birth_year(input)) {
+            birth_year = atoi(input);
+            break;
+        } else {
+            printf("Ошибка: введите корректный 4-значный год.\n");
+        }
+    }
+
+    // === experience_year ===
+    while (1) {
+        printf("Введите количество лет опыта (целое число >= 0): ");
+        scanf("%s", input);
+        if (validate_number(input)) {
+            experience_year = atoi(input);
+            break;
+        } else {
+            printf("Ошибка: опыт должен быть целым числом (>= 0).\n");
+        }
+    }
+
+    // === address ===
+    printf("Введите адрес: ");
+    getchar(); // очистка \n после предыдущего scanf
+    fgets(address, sizeof(address), stdin);
+    address[strcspn(address, "\n")] = 0;
+
+    // === helicopter_number ===
+    while (1) {
+        printf("Введите номер вертолета: ");
+        scanf("%s", input);
+        helicopter_number = atoi(input);
+        if (validate_number(input) && validate_helicopter_number(db, helicopter_number)) {
+            break;
+        } else {
+            printf("Ошибка: вертолет с таким номером не найден или номер некорректен.\n");
+        }
+    }
+
+    // === Вставка в базу ===
+    const char *sql = "INSERT INTO Crew_member (tab_number, last_name, position, birth_year, experience_years, address, helicopter_number) "
+                      "VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+    sqlite3_stmt *stmt;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) != SQLITE_OK) {
+        printf("Ошибка подготовки запроса: %s\n", sqlite3_errmsg(db));
+        return 1;
+    }
+
+    sqlite3_bind_int(stmt, 1, tab_number);
+    sqlite3_bind_text(stmt, 2, last_name, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 3, position, -1, SQLITE_STATIC);
+    sqlite3_bind_int(stmt, 4, birth_year);
+    sqlite3_bind_int(stmt, 5, experience_year);
+    sqlite3_bind_text(stmt, 6, address, -1, SQLITE_STATIC);
+    sqlite3_bind_int(stmt, 7, helicopter_number);
+
+    if (sqlite3_step(stmt) != SQLITE_DONE) {
+        printf("Ошибка при вставке: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        return 1;
+    }
+
+    sqlite3_finalize(stmt);
+    printf("Член экипажа успешно добавлен.\n");
+    return 0;
+}
+
+// Удаление члена экипажа
+int delete_crew_member(sqlite3 *db) {
+    int tab_number;
+
+    // Запрос табельного номера
+    printf("Введите табельный номер члена экипажа для удаления: ");
+    scanf("%d", &tab_number);
+
+    // Проверка, существует ли такой член экипажа в базе данных
+    if (!validate_crew_member(db, tab_number)) {
+        printf("Ошибка: Член экипажа с табельным номером %d не найден.\n", tab_number);
+        return 1;  // Завершаем функцию, если член экипажа не найден
+    }
+
+    // Формирование SQL запроса для удаления члена экипажа
+    const char *sql = "DELETE FROM Crew_member WHERE tab_number = ?";
+
+    sqlite3_stmt *stmt;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) != SQLITE_OK) {
+        printf("Ошибка при подготовке запроса: %s\n", sqlite3_errmsg(db));
+        return 1;
+    }
+
+    // Привязка табельного номера
+    sqlite3_bind_int(stmt, 1, tab_number);
+
+    // Выполнение запроса на удаление
+    int rc = sqlite3_step(stmt);
+    if (rc != SQLITE_DONE) {
+        printf("Ошибка при удалении члена экипажа: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        return 1;
+    }
+
+    printf("Член экипажа с табельным номером %d успешно удален.\n", tab_number);
+
+    // Завершаем работу с запросом
+    sqlite3_finalize(stmt);
+    return 0;
+}

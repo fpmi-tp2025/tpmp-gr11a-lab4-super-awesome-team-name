@@ -14,6 +14,13 @@ void get_normal_flights_summary(sqlite3 *db);
 // UPDATE
 int update_crew_member(sqlite3 *db);
 int update_flight(sqlite3 *db);
+int update_helicopter(sqlite3 *db);
+
+// INSERT
+int insert_crew_member(sqlite3 *db);
+
+// DELETE
+int delete_crew_member(sqlite3 *db);
 
 // Интерфейс для Commander
 void commander_interface(sqlite3 *db) {
@@ -24,7 +31,8 @@ void commander_interface(sqlite3 *db) {
         printf("Выберите операцию с базой данных:\n");
         printf("1. SELECT (Просмотр данных)\n");
         printf("2. UPDATE (Обновление данных)\n");
-        printf("3. DELETE (Удаление данных)\n");
+        printf("3. INSERT (Добавление данных)\n");
+        printf("4. DELETE (Удаление данных)\n");
         printf("0. Выйти\n");
         printf("Введите ваш выбор: ");
         scanf("%d", &choice);
@@ -90,25 +98,47 @@ void commander_interface(sqlite3 *db) {
                         case 2:
                             update_flight(db);
                             break;
+                        case 3:
+                            update_helicopter(db);
                         default:
                             printf("Неверный выбор. Попробуйте снова.\n");
                     }
                 }
                 break;  // Возврат в главное меню после выхода из подменю UPDATE
 
-            case 3:  // Если выбрано DELETE
+            case 3: // Если выбрано INSERT
                 while (1) {
-                    printf("\nВы выбрали DELETE.\n");
-                    printf("1. Ничего не реализовано\n");
+                    printf("\nВы выбрали INSERT.\n");
+                    printf("1. Добавить работника\n");
                     printf("0. Вернуться в главное меню\n");
                     printf("Введите ваш выбор: ");
                     scanf("%d", &choice);
 
-                    if (choice == 0) break;  // Выход в главное меню
+                    if (choice == 0) break;
 
                     switch (choice) {
                         case 1:
-                            printf("Заглушка\n");
+                            insert_crew_member(db);
+                            break;
+                        default:
+                            printf("Неверный выбор. Попробуйте снова.\n");
+                    }
+                }
+                break;
+
+            case 4:  // Если выбрано DELETE
+                while (1) {
+                    printf("\nВы выбрали DELETE.\n");
+                    printf("1. Удалить работника\n");
+                    printf("0. Вернуться в главное меню\n");
+                    printf("Введите ваш выбор: ");
+                    scanf("%d", &choice);
+
+                    if (choice == 0) break;
+
+                    switch (choice) {
+                        case 1:
+                            delete_crew_member(db);
                             break;
                         default:
                             printf("Неверный выбор. Попробуйте снова.\n");
