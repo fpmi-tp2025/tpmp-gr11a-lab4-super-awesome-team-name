@@ -122,3 +122,27 @@ int validate_flight_code(sqlite3 *db, int flight_code) {
 
     return (count > 0);
 }
+
+// Функция для проверки существования члена экипажа по табельному номеру
+int validate_crew_member(sqlite3 *db, int tab_number) {
+    sqlite3_stmt *stmt;
+    const char *sql = "SELECT COUNT(*) FROM Crew_member WHERE tab_number = ?";
+
+    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
+    if (rc != SQLITE_OK) {
+        printf("Ошибка при подготовке запроса: %s\n", sqlite3_errmsg(db));
+        return 0;
+    }
+
+    sqlite3_bind_int(stmt, 1, tab_number);
+
+    int count = 0;
+    rc = sqlite3_step(stmt);
+    if (rc == SQLITE_ROW) {
+        count = sqlite3_column_int(stmt, 0);
+    }
+
+    sqlite3_finalize(stmt);
+
+    return (count > 0);  // Если член экипажа найден в базе
+}

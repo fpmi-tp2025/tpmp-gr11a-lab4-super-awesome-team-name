@@ -31,4 +31,7 @@ int validate_is_special(const char *input);
 // Функция для проверки существования flight_code в базе данных
 int validate_flight_code(sqlite3 *db, int flight_code);
 
+// Функция для проверки существования члена экипажа по табельному номеру
+int validate_crew_member(sqlite3 *db, int tab_number);
+
 #endif //TEAM_LAB4_VALIDATION_H

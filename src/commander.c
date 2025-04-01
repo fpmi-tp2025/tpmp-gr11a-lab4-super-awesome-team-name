@@ -790,3 +790,44 @@ int insert_crew_member(sqlite3 *db) {
     printf("Член экипажа успешно добавлен.\n");
     return 0;
 }
+
+// Удаление члена экипажа
+int delete_crew_member(sqlite3 *db) {
+    int tab_number;
+
+    // Запрос табельного номера
+    printf("Введите табельный номер члена экипажа для удаления: ");
+    scanf("%d", &tab_number);
+
+    // Проверка, существует ли такой член экипажа в базе данных
+    if (!validate_crew_member(db, tab_number)) {
+        printf("Ошибка: Член экипажа с табельным номером %d не найден.\n", tab_number);
+        return 1;  // Завершаем функцию, если член экипажа не найден
+    }
+
+    // Формирование SQL запроса для удаления члена экипажа
+    const char *sql = "DELETE FROM Crew_member WHERE tab_number = ?";
+
+    sqlite3_stmt *stmt;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) != SQLITE_OK) {
+        printf("Ошибка при подготовке запроса: %s\n", sqlite3_errmsg(db));
+        return 1;
+    }
+
+    // Привязка табельного номера
+    sqlite3_bind_int(stmt, 1, tab_number);
+
+    // Выполнение запроса на удаление
+    int rc = sqlite3_step(stmt);
+    if (rc != SQLITE_DONE) {
+        printf("Ошибка при удалении члена экипажа: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        return 1;
+    }
+
+    printf("Член экипажа с табельным номером %d успешно удален.\n", tab_number);
+
+    // Завершаем работу с запросом
+    sqlite3_finalize(stmt);
+    return 0;
+}
