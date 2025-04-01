@@ -5,6 +5,6 @@
 #include <sqlite3.h>
 
 void commander_interface(sqlite3 *db);
-void crew_member_interface(sqlite3 *db);
+void crew_member_interface(sqlite3 *db, int tab_number);
 
 #endif
