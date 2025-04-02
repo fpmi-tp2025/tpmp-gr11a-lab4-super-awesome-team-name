@@ -1,8 +1,8 @@
 #include <check.h>
 #include <stdlib.h>
 #include <sqlite3.h>
-#include <stdio.h>  // Добавляем для fprintf и stderr
-#include "validation.h"  // Заголовок с функциями для работы с БД
+#include <stdio.h>
+#include "validation.h"
 
 // Тестируемая функция
 int validate_flight_code(sqlite3 *db, int flight_code);
@@ -34,8 +34,8 @@ void disconnect_db(sqlite3* db) {
 
 // Тест для функции validate_flight_code
 START_TEST(test_validate_flight_code) {
-        sqlite3 *db = connect_db(":memory:");  // Используем базу данных в памяти для теста
-        initialize_db(db);  // Инициализация базы данных
+        sqlite3 *db = connect_db(":memory:");
+        initialize_db(db);
 
         // Вставляем несколько тестовых записей в таблицу Flight
         const char *insert_sql = "INSERT INTO Flight (flight_code) VALUES (?);";
@@ -43,11 +43,11 @@ START_TEST(test_validate_flight_code) {
         sqlite3_prepare_v2(db, insert_sql, -1, &stmt, 0);
 
         // Вставляем данные для теста
-        sqlite3_bind_int(stmt, 1, 1001);  // flight_code = 1001
+        sqlite3_bind_int(stmt, 1, 1001);
         sqlite3_step(stmt);
         sqlite3_clear_bindings(stmt);
 
-        sqlite3_bind_int(stmt, 1, 1002);  // flight_code = 1002
+        sqlite3_bind_int(stmt, 1, 1002);
         sqlite3_step(stmt);
 
         sqlite3_finalize(stmt);
