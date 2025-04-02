@@ -4,6 +4,7 @@
 #include <sqlite3.h>
 #include <string.h>
 #include <time.h>
+#include "../include/validation.h"
 
 // Функция для проверки, является ли строка валидным именем
 int validate_name(const char *name) {

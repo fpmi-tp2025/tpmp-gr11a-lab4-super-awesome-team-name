@@ -4,8 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "commander.h"
-#include "validation.h"
+#include "../../include/commander/commander.h"
+#include "../../include/validation.h"
 
 // Функция для преобразования строки в дату (структура tm)
 struct tm string_to_date(const char *date_str) {

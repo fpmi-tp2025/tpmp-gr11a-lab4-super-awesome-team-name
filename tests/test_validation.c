@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <sqlite3.h>
 #include <stdio.h>
-#include "validation.h"
+#include "../include/validation.h"
 
 // Тестируемая функция
 int validate_flight_code(sqlite3 *db, int flight_code);

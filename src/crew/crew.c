@@ -4,8 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "crew.h"
-#include "validation.h"
+#include "../../include/crew/crew.h"
+#include "../../include/validation.h"
 
 // Функция для получения информации о члене экипажа по его табельному номеру
 void get_crew_member_info(sqlite3 *db, int tab_number) {
@@ -220,7 +220,7 @@ void calculate_crew_member_earnings(sqlite3 *db, int tab_number, const char *sta
     
     // Выполнение запроса и обработка результатов
     printf("\nЗаработок с %s по %s:\n", start_date, end_date);
-    printf("Дата\t\tКод рейса\tСтоимость рейса\tКол-во пассажиров\tТип рейса\tЗаработок\n");
+    printf("Дата\t\tКод рейса\tСтоимость рейса\tКол-во пассажиров\tЗаработок\tТип рейса\n");
     
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int flight_code = sqlite3_column_int(stmt, 0);
@@ -233,8 +233,8 @@ void calculate_crew_member_earnings(sqlite3 *db, int tab_number, const char *sta
         double earnings_percentage = is_special ? 0.10 : 0.05;
         double earnings = (flight_cost * earnings_percentage * passengers_count) / 3;  // Деление на 3 для каждого члена экипажа
         
-        printf("%s\t%d\t\t%.2f\t\t%d\t\t\t%s\t\t%.2f\n", 
-                date, flight_code, flight_cost, passengers_count , is_special ? "Спецрейс" : "Обычный", earnings);
+        printf("%s\t%d\t\t%.2f\t\t%d\t\t\t%.2f\t\t%s\n", 
+                date, flight_code, flight_cost, passengers_count , earnings, is_special ? "Спецрейс" : "Обычный");
         
         // Обновление итогов
         total_earnings += earnings;
