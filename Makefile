@@ -43,15 +43,20 @@ $(BIN_DIR)/test_commander: tests/test_commander.c src/commander.c
 	@mkdir -p $(BIN_DIR)
 	$(CC) -o $(BIN_DIR)/test_commander tests/test_commander.c src/commander.c src/validation.c -I./src $(CHECK_LIB) -lm -lpthread -lsqlite3
 
+$(BIN_DIR)/test_crew: tests/test_crew.c src/crew.c
+	@mkdir -p $(BIN_DIR)
+	$(CC) -o $(BIN_DIR)/test_crew tests/test_crew.c src/crew.c src/validation.c -I./src $(CHECK_LIB) -lm -lpthread -lsqlite3
+
 
 # Сборка и запуск тестов
-test: $(BIN_DIR)/test_validation $(BIN_DIR)/test_commander
+test: $(BIN_DIR)/test_validation $(BIN_DIR)/test_commander $(BIN_DIR)/test_crew
 	$(BIN_DIR)/test_validation
 	$(BIN_DIR)/test_commander
+	$(BIN_DIR)/test_crew
 
 # Очистка
 clean:
-	rm -rf $(BIN_DIR)/*.o $(BIN_DIR)/$(TARGET) $(BIN_DIR)/test_validation
+	rm -rf $(BIN_DIR)/*.o $(BIN_DIR)/$(TARGET) $(BIN_DIR)/test_validation $(BIN_DIR)/test_commander $(BIN_DIR)/test_crew
 
 # Правило по умолчанию
 all: $(TARGET)
