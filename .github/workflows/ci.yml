@@ -23,6 +23,22 @@ jobs:
       - name: Build project using Make
         run: make
 
+      - name: Clean up build files
+        run: make clean
+
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up build dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential sqlite3 && sudo apt-get install check
+
+      - name: Build project using Make
+        run: make
+
       - name: Testing
         run: make test
 
