@@ -39,9 +39,15 @@ $(BIN_DIR)/test_validation: tests/test_validation.c src/validation.c
 	@mkdir -p $(BIN_DIR)
 	$(CC) -o $(BIN_DIR)/test_validation tests/test_validation.c src/validation.c -I./src $(CHECK_LIB) -lm -lpthread -lsqlite3
 
+$(BIN_DIR)/test_commander: tests/test_commander.c src/commander.c
+	@mkdir -p $(BIN_DIR)
+	$(CC) -o $(BIN_DIR)/test_commander tests/test_commander.c src/commander.c src/validation.c -I./src $(CHECK_LIB) -lm -lpthread -lsqlite3
+
+
 # Сборка и запуск тестов
-test: $(BIN_DIR)/test_validation
+test: $(BIN_DIR)/test_validation $(BIN_DIR)/test_commander
 	$(BIN_DIR)/test_validation
+	$(BIN_DIR)/test_commander
 
 # Очистка
 clean:

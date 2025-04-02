@@ -155,8 +155,7 @@ void get_special_flights_summary(sqlite3 *db) {
     sqlite3_finalize(stmt);
 }
 
-// Функция для вывода максимально заработавшего экипажа
-void get_max_earning_crew(sqlite3 *db) {
+max_earning_crew_t get_max_earning_crew(sqlite3 *db) {
     sqlite3_stmt *stmt;
     const char *sql_crew =
             "SELECT H.helicopter_number, H.model, SUM(F.flight_cost) AS total_earnings "
@@ -164,74 +163,78 @@ void get_max_earning_crew(sqlite3 *db) {
             "JOIN Crew_member CM ON CM.helicopter_number = F.helicopter_number "
             "JOIN Helicopter H ON F.helicopter_number = H.helicopter_number "
             "GROUP BY F.helicopter_number "
-            "ORDER BY total_earnings DESC LIMIT 1";  // Получаем вертолет с максимальными заработками
+            "ORDER BY total_earnings DESC LIMIT 1";
 
     int rc = sqlite3_prepare_v2(db, sql_crew, -1, &stmt, 0);
     if (rc != SQLITE_OK) {
-        printf("Ошибка при подготовке запроса: %s\n", sqlite3_errmsg(db));
-        return;
+        max_earning_crew_t error_result = {0};
+        return error_result; // Возвращаем пустую структуру в случае ошибки
     }
 
+    max_earning_crew_t result = {0};  // Инициализируем структуру
+
     if (sqlite3_step(stmt) == SQLITE_ROW) {
-        // Получаем информацию о вертолете и заработанных деньгах
-        int helicopter_number = sqlite3_column_int(stmt, 0);
+        result.helicopter_number = sqlite3_column_int(stmt, 0);
         const char *helicopter_model = (const char*)sqlite3_column_text(stmt, 1);
-        double total_earnings = sqlite3_column_double(stmt, 2);
+        snprintf(result.helicopter_model, sizeof(result.helicopter_model), "%s", helicopter_model);
+        result.total_earnings = sqlite3_column_double(stmt, 2);
 
         // Выводим информацию о вертолете и заработанных деньгах
-        printf("Номер вертолета: %d\n", helicopter_number);
-        printf("Модель вертолета: %s\n", helicopter_model);
-        printf("Общее количество заработанных денег: %.2f$\n", total_earnings);
+        printf("Номер вертолета: %d\n", result.helicopter_number);
+        printf("Модель вертолета: %s\n", result.helicopter_model);
+        printf("Общее количество заработанных денег: %.2f$\n", result.total_earnings);
 
-        // Теперь выводим членов экипажа, связанного с этим вертолетом
         const char *sql_crew_members =
                 "SELECT CM.tab_number, CM.last_name "
                 "FROM Crew_member CM "
-                "WHERE CM.helicopter_number = ?";  // Получаем членов экипажа для данного вертолета
+                "WHERE CM.helicopter_number = ?";
 
         sqlite3_stmt *stmt_members;
         rc = sqlite3_prepare_v2(db, sql_crew_members, -1, &stmt_members, 0);
         if (rc != SQLITE_OK) {
-            printf("Ошибка при подготовке запроса для членов экипажа: %s\n", sqlite3_errmsg(db));
             sqlite3_finalize(stmt);
-            return;
+            return result; // Возвращаем структуру с ошибкой
         }
 
-        sqlite3_bind_int(stmt_members, 1, helicopter_number);
-
+        sqlite3_bind_int(stmt_members, 1, result.helicopter_number);
+        result.crew_count = 0;
         printf("Члены экипажа:\n");
-
         while (sqlite3_step(stmt_members) == SQLITE_ROW) {
-            int tab_number = sqlite3_column_int(stmt_members, 0);
+            result.crew_members[result.crew_count].tab_number = sqlite3_column_int(stmt_members, 0);
             const char *last_name = (const char*)sqlite3_column_text(stmt_members, 1);
-            printf("Табельный номер: %d, Фамилия: %s\n", tab_number, last_name);
+            snprintf(result.crew_members[result.crew_count].last_name, sizeof(result.crew_members[result.crew_count].last_name), "%s", last_name);
+
+            // Выводим информацию о членах экипажа
+            printf("Табельный номер: %d, Фамилия: %s\n", result.crew_members[result.crew_count].tab_number, result.crew_members[result.crew_count].last_name);
+            result.crew_count++;
         }
 
         sqlite3_finalize(stmt_members);
 
-        // Далее выводим рейсы этого экипажа
         const char *sql_flights =
                 "SELECT F.date, F.flight_code, F.flight_cost "
                 "FROM Flight F "
-                "WHERE F.helicopter_number = ?";  // Получаем все рейсы для этого вертолета
+                "WHERE F.helicopter_number = ?";
 
         sqlite3_stmt *stmt_flights;
         rc = sqlite3_prepare_v2(db, sql_flights, -1, &stmt_flights, 0);
         if (rc != SQLITE_OK) {
-            printf("Ошибка при подготовке запроса для рейсов: %s\n", sqlite3_errmsg(db));
             sqlite3_finalize(stmt);
-            return;
+            return result; // Возвращаем структуру с ошибкой
         }
 
-        sqlite3_bind_int(stmt_flights, 1, helicopter_number);
-
+        sqlite3_bind_int(stmt_flights, 1, result.helicopter_number);
+        result.flight_count = 0;
         printf("Рейсы:\n");
-
         while (sqlite3_step(stmt_flights) == SQLITE_ROW) {
             const char *flight_date = (const char*)sqlite3_column_text(stmt_flights, 0);
-            int flight_code = sqlite3_column_int(stmt_flights, 1);
-            double flight_cost = sqlite3_column_double(stmt_flights, 2);
-            printf("Дата: %s, Код полета: %d, Стоимость рейса: %.2f$\n", flight_date, flight_code, flight_cost);
+            snprintf(result.flights[result.flight_count].date, sizeof(result.flights[result.flight_count].date), "%s", flight_date);
+            result.flights[result.flight_count].flight_code = sqlite3_column_int(stmt_flights, 1);
+            result.flights[result.flight_count].flight_cost = sqlite3_column_double(stmt_flights, 2);
+
+            // Выводим информацию о рейсах
+            printf("Дата: %s, Код полета: %d, Стоимость рейса: %.2f$\n", result.flights[result.flight_count].date, result.flights[result.flight_count].flight_code, result.flights[result.flight_count].flight_cost);
+            result.flight_count++;
         }
 
         sqlite3_finalize(stmt_flights);
@@ -240,6 +243,7 @@ void get_max_earning_crew(sqlite3 *db) {
     }
 
     sqlite3_finalize(stmt);
+    return result;
 }
 
 // Информацию по вертолету и экипажу с макс кол-во рейсов
