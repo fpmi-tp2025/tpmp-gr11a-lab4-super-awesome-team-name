@@ -21,9 +21,9 @@ SRC_VALIDATION = $(SRC_DIR)/validation.c
 # Объединяем все исходные файлы
 SRC = $(SRC_MAIN) $(SRC_COMMANDER) $(SRC_CREW) $(SRC_VALIDATION) $(SRC_INTERFACE)
 
-# Тестовые файлы
-TEST_SRC = $(TEST_DIR)/test_validation.c
-TEST_EXEC = $(BIN_DIR)/test_validation
+## Тестовые файлы
+#TEST_SRC = $(TEST_DIR)/test_validation.c $(TEST_DIR)/test_crew.c $(TEST_DIR)/test_commander.c
+#TEST_EXEC = $(BIN_DIR)/test_validation (BIN_DIR)/test_crew (BIN_DIR)/test_commander
 
 # Библиотеки
 LIBS = -lsqlite3
@@ -72,13 +72,25 @@ $(BIN_DIR)/crew/%.o: $(SRC_DIR)/crew/%.c
 $(OBJ_VALIDATION): $(SRC_VALIDATION)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Правила для компиляции и запуска тестов
-$(TEST_EXEC): $(TEST_SRC) $(SRC_VALIDATION)
-	$(CC) -o $(TEST_EXEC) $(TEST_SRC) $(SRC_VALIDATION) -I$(INCLUDE_DIR) $(CHECK_LIB) $(LIBS)
+TEST_VALIDATION_SRC = tests/test_validation.c src/validation.c
+TEST_CREW_SRC = tests/test_crew.c src/crew/crew.c src/crew/crew_interface.c src/validation.c
+TEST_COMMANDER_SRC = tests/test_commander.c src/commander/commander.c src/commander/commander_interface.c src/validation.c
+
+# Правила для тестов
+$(BIN_DIR)/test_validation: $(TEST_VALIDATION_SRC)
+	$(CC) -o $@ $^ -I$(INCLUDE_DIR) $(CHECK_LIB) $(LIBS)
+
+$(BIN_DIR)/test_crew: $(TEST_CREW_SRC)
+	$(CC) -o $@ $^ -I$(INCLUDE_DIR) $(CHECK_LIB) $(LIBS)
+
+$(BIN_DIR)/test_commander: $(TEST_COMMANDER_SRC)
+	$(CC) -o $@ $^ -I$(INCLUDE_DIR) $(CHECK_LIB) $(LIBS)
 
 # Сборка и запуск тестов
-test: directories $(TEST_EXEC)
-	$(TEST_EXEC)
+test: directories $(BIN_DIR)/test_validation $(BIN_DIR)/test_crew $(BIN_DIR)/test_commander
+	$(BIN_DIR)/test_validation
+	$(BIN_DIR)/test_crew
+	$(BIN_DIR)/test_commander
 
 # Очистка
 clean:

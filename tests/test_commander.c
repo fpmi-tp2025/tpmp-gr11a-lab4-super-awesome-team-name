@@ -3,7 +3,7 @@
 #include <sqlite3.h>
 #include <string.h>
 #include <stdio.h>
-#include "commander.h"
+#include "../include/commander/commander.h"
 
 max_earning_crew_t get_max_earning_crew(sqlite3 *db);
 

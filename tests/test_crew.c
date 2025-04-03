@@ -3,7 +3,7 @@
 #include <sqlite3.h>
 #include <string.h>
 #include <stdio.h>
-#include "crew.h"
+#include "../include/crew/crew.h"
 
 // Функция для подключения к базе данных
 sqlite3* connect_db(const char *db_name) {
