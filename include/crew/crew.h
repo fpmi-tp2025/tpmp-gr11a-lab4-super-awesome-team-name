@@ -5,11 +5,21 @@
 #include <sqlite3.h>
 #include "models/crew_struct.h"
 
+typedef struct {
+    int helicopter_number;
+    const char *model;
+    const char *manufacture_date;
+    double max_payload;
+    const char *last_repair_date;
+    int flight_resource;
+    int found; // флаг, чтобы проверить, найдена ли информация
+} HelicopterInfo;
+
 // Функция для получения информации о члене экипажа по его табельному номеру
 CrewMember* get_crew_member_report(sqlite3 *db, int tab_number);
 
 // Функция для получения информации о вертолете, закрепленном за членом экипажа
-void get_helicopter_info(sqlite3 *db, int tab_number);
+HelicopterInfo get_helicopter_info(sqlite3 *db, int tab_number);
 
 // Функция для получения налетанных часов и оставшегося ресурса вертолета члена экипажа
 void get_flight_hours_for_crew_helicopter(sqlite3 *db, int tab_number);

@@ -6,6 +6,24 @@
 #include "models/commander_struct.h"
 #include "../../include/validation.h"
 
+// структура для get_max_earning_crew
+typedef struct {
+    int helicopter_number;
+    char helicopter_model[128];
+    double total_earnings;
+    struct {
+        int tab_number;
+        char last_name[128];
+    } crew_members[10];
+    int crew_count;
+    struct {
+        char date[128];
+        int flight_code;
+        double flight_cost;
+    } flights[10];
+    int flight_count;
+} max_earning_crew_t;
+
 // Функция для получения и вывода данных по рейсам в указанном периоде
 FlightPeriodReport* get_flights_report(sqlite3 *db, const char *start, const char *end);
 
@@ -16,7 +34,7 @@ void get_flights_hours_after_repair(sqlite3 *db);
 void get_special_flights_summary(sqlite3 *db);
 
 // Функция для вывода максимально заработавшего экипажа
-void get_max_earning_crew(sqlite3 *db);
+max_earning_crew_t get_max_earning_crew(sqlite3 *db);
 
 // Информацию по вертолету и экипажу с макс кол-во рейсов
 void get_helicopter_with_most_flights(sqlite3 *db);

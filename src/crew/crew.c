@@ -47,38 +47,81 @@ CrewMember* get_crew_member_report(sqlite3 *db, int tab_number) {
     return member;
 }
 
-// Функция для получения информации о вертолете, закрепленном за членом экипажа
-void get_helicopter_info(sqlite3 *db, int tab_number) {
+HelicopterInfo get_helicopter_info(sqlite3 *db, int tab_number) {
     sqlite3_stmt *stmt;
+    HelicopterInfo info = {0};
     const char *query = "SELECT h.helicopter_number, h.model, h.manufacture_date, h.max_payload, "
                         "h.last_repair_date, h.flight_resource "
                         "FROM Helicopter h "
                         "JOIN Crew_member cm ON h.helicopter_number = cm.helicopter_number "
                         "WHERE cm.tab_number = ?";
-    
-    // Подготовка SQL-запроса
+
     if (sqlite3_prepare_v2(db, query, -1, &stmt, NULL) != SQLITE_OK) {
         printf("Ошибка при подготовке запроса: %s\n", sqlite3_errmsg(db));
-        return;
+        return info;
     }
-    
-    // Привязка параметров
+
     sqlite3_bind_int(stmt, 1, tab_number);
-    
-    // Выполнение запроса и обработка результатов
+
     if (sqlite3_step(stmt) == SQLITE_ROW) {
-        printf("Номер вертолета: %d\n", sqlite3_column_int(stmt, 0));
-        printf("Модель: %s\n", sqlite3_column_text(stmt, 1));
-        printf("Дата изготовления: %s\n", sqlite3_column_text(stmt, 2));
-        printf("Максимальная грузоподъемность: %.2f кг\n", sqlite3_column_double(stmt, 3));
-        printf("Дата последнего ремонта: %s\n", sqlite3_column_text(stmt, 4));
-        printf("Ресурс летного времени: %d часов\n", sqlite3_column_int(stmt, 5));
+        info.helicopter_number = sqlite3_column_int(stmt, 0);
+
+        // Защита от NULL значений для строк
+        const char *model = (const char *)sqlite3_column_text(stmt, 1);
+        const char *manufacture_date = (const char *)sqlite3_column_text(stmt, 2);
+        const char *last_repair_date = (const char *)sqlite3_column_text(stmt, 4);
+
+        // Копируем строки в структуру, если они не NULL
+        if (model) {
+            info.model = strdup(model);
+            if (!info.model) {
+                printf("Ошибка при выделении памяти для модели вертолета\n");
+                sqlite3_finalize(stmt);
+                return info;
+            }
+        } else {
+            info.model = "Не указана";
+        }
+
+        if (manufacture_date) {
+            info.manufacture_date = strdup(manufacture_date);
+            if (!info.manufacture_date) {
+                printf("Ошибка при выделении памяти для даты изготовления\n");
+                sqlite3_finalize(stmt);
+                return info;
+            }
+        } else {
+            info.manufacture_date = "Не указана";
+        }
+
+        if (last_repair_date) {
+            info.last_repair_date = strdup(last_repair_date);
+            if (!info.last_repair_date) {
+                printf("Ошибка при выделении памяти для даты последнего ремонта\n");
+                sqlite3_finalize(stmt);
+                return info;
+            }
+        } else {
+            info.last_repair_date = "Не указана";
+        }
+
+        info.max_payload = sqlite3_column_double(stmt, 3);
+        info.flight_resource = sqlite3_column_int(stmt, 5);
+        info.found = 1;
+
+        printf("Номер вертолета: %d\n", info.helicopter_number);
+        printf("Модель: %s\n", info.model);
+        printf("Дата изготовления: %s\n", info.manufacture_date);
+        printf("Максимальная грузоподъемность: %.2f кг\n", info.max_payload);
+        printf("Дата последнего ремонта: %s\n", info.last_repair_date);
+        printf("Ресурс летного времени: %d часов\n", info.flight_resource);
     } else {
         printf("Не найдена информация о вертолете для члена экипажа с табельным номером %d.\n", tab_number);
+        info.found = 0;
     }
-    
-    // Освобождение ресурсов
+
     sqlite3_finalize(stmt);
+    return info;
 }
 
 // Функция для получения налетанных часов и оставшегося ресурса вертолета члена экипажа
