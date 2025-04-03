@@ -3,8 +3,7 @@
 #include <sqlite3.h>
 #include <string.h>
 
-#include "../include/commander/commander_interface.h"
-#include "../include/crew/crew_interface.h"
+#include "../include/interface.h"
 
 typedef enum { COMMANDER, CREW_MEMBER } Position;
 

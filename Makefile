@@ -13,12 +13,13 @@ INCLUDE_DIR = include
 
 # Исходные файлы
 SRC_MAIN = $(SRC_DIR)/main.c
+SRC_INTERFACE = $(SRC_DIR)/interface.c
 SRC_COMMANDER = $(SRC_DIR)/commander/commander.c $(SRC_DIR)/commander/commander_interface.c
 SRC_CREW = $(SRC_DIR)/crew/crew.c $(SRC_DIR)/crew/crew_interface.c
 SRC_VALIDATION = $(SRC_DIR)/validation.c
 
 # Объединяем все исходные файлы
-SRC = $(SRC_MAIN) $(SRC_COMMANDER) $(SRC_CREW) $(SRC_VALIDATION)
+SRC = $(SRC_MAIN) $(SRC_COMMANDER) $(SRC_CREW) $(SRC_VALIDATION) $(SRC_INTERFACE)
 
 # Тестовые файлы
 TEST_SRC = $(TEST_DIR)/test_validation.c
@@ -30,12 +31,13 @@ CHECK_LIB = $(shell pkg-config --cflags --libs check) -lm -lpthread
 
 # Объектные файлы
 OBJ_MAIN = $(BIN_DIR)/main.o
+OBJ_INTERFACE = $(BIN_DIR)/interface.o
 OBJ_COMMANDER = $(BIN_DIR)/commander/commander.o $(BIN_DIR)/commander/commander_interface.o
 OBJ_CREW = $(BIN_DIR)/crew/crew.o $(BIN_DIR)/crew/crew_interface.o
 OBJ_VALIDATION = $(BIN_DIR)/validation.o
 
 # Объединяем все объектные файлы
-OBJ = $(OBJ_MAIN) $(OBJ_COMMANDER) $(OBJ_CREW) $(OBJ_VALIDATION)
+OBJ = $(OBJ_MAIN) $(OBJ_COMMANDER) $(OBJ_CREW) $(OBJ_VALIDATION) $(OBJ_INTERFACE)
 
 # Правило по умолчанию
 all: directories $(TARGET)
@@ -52,6 +54,10 @@ $(TARGET): $(OBJ)
 
 # Правила для компиляции main.c
 $(OBJ_MAIN): $(SRC_MAIN)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Правила для компиляции interface.c
+$(OBJ_INTERFACE): $(SRC_INTERFACE)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Правила для компиляции commander
