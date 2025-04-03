@@ -4,40 +4,47 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "crew.h"
-#include "validation.h"
+#include "../../include/crew/crew.h"
+#include "../../include/validation.h"
 
 // Функция для получения информации о члене экипажа по его табельному номеру
-void get_crew_member_info(sqlite3 *db, int tab_number) {
+CrewMember* get_crew_member_report(sqlite3 *db, int tab_number) {
     sqlite3_stmt *stmt;
     const char *query = "SELECT tab_number, last_name, position, experience_years, address, birth_year, helicopter_number "
                         "FROM Crew_member "
                         "WHERE tab_number = ?";
-    
-    // Подготовка SQL-запроса
+
     if (sqlite3_prepare_v2(db, query, -1, &stmt, NULL) != SQLITE_OK) {
-        printf("Ошибка при подготовке запроса: %s\n", sqlite3_errmsg(db));
-        return;
+        printf("Ошибка подготовки запроса: %s\n", sqlite3_errmsg(db));
+        return NULL;
     }
-    
-    // Привязка параметров
+
     sqlite3_bind_int(stmt, 1, tab_number);
-    
-    // Выполнение запроса и обработка результатов
-    if (sqlite3_step(stmt) == SQLITE_ROW) {
-        printf("Табельный номер: %d\n", sqlite3_column_int(stmt, 0));
-        printf("Фамилия: %s\n", sqlite3_column_text(stmt, 1));
-        printf("Должность: %s\n", sqlite3_column_text(stmt, 2));
-        printf("Стаж: %d лет\n", sqlite3_column_int(stmt, 3));
-        printf("Адрес: %s\n", sqlite3_column_text(stmt, 4));
-        printf("Год рождения: %d\n", sqlite3_column_int(stmt, 5));
-        printf("Номер вертолета: %d\n", sqlite3_column_int(stmt, 6));
-    } else {
-        printf("Член экипажа с табельным номером %d не найден.\n", tab_number);
+
+    if (sqlite3_step(stmt) != SQLITE_ROW) {
+        sqlite3_finalize(stmt);
+        return NULL;
     }
-    
-    // Освобождение ресурсов
+
+    // Выделяем память для структуры
+    CrewMember* member = (CrewMember*)malloc(sizeof(CrewMember));
+    if (!member) {
+        sqlite3_finalize(stmt);
+        return NULL;
+    }
+
+    // Заполняем поля структуры
+    member->tab_number = sqlite3_column_int(stmt, 0);
+
+    member->last_name = strdup((const char*)sqlite3_column_text(stmt, 1));
+    member->position = strdup((const char*)sqlite3_column_text(stmt, 2));
+    member->experience_years = sqlite3_column_int(stmt, 3);
+    member->address = strdup((const char*)sqlite3_column_text(stmt, 4));
+    member->birth_year = sqlite3_column_int(stmt, 5);
+    member->helicopter_number = sqlite3_column_int(stmt, 6);
+
     sqlite3_finalize(stmt);
+    return member;
 }
 
 HelicopterInfo get_helicopter_info(sqlite3 *db, int tab_number) {
@@ -263,7 +270,7 @@ void calculate_crew_member_earnings(sqlite3 *db, int tab_number, const char *sta
     
     // Выполнение запроса и обработка результатов
     printf("\nЗаработок с %s по %s:\n", start_date, end_date);
-    printf("Дата\t\tКод рейса\tСтоимость рейса\tКол-во пассажиров\tТип рейса\tЗаработок\n");
+    printf("Дата\t\tКод рейса\tСтоимость рейса\tКол-во пассажиров\tЗаработок\tТип рейса\n");
     
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int flight_code = sqlite3_column_int(stmt, 0);
@@ -276,8 +283,8 @@ void calculate_crew_member_earnings(sqlite3 *db, int tab_number, const char *sta
         double earnings_percentage = is_special ? 0.10 : 0.05;
         double earnings = (flight_cost * earnings_percentage * passengers_count) / 3;  // Деление на 3 для каждого члена экипажа
         
-        printf("%s\t%d\t\t%.2f\t\t%d\t\t\t%s\t\t%.2f\n", 
-                date, flight_code, flight_cost, passengers_count , is_special ? "Спецрейс" : "Обычный", earnings);
+        printf("%s\t%d\t\t%.2f\t\t%d\t\t\t%.2f\t\t%s\n", 
+                date, flight_code, flight_cost, passengers_count , earnings, is_special ? "Спецрейс" : "Обычный");
         
         // Обновление итогов
         total_earnings += earnings;

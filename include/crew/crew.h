@@ -3,6 +3,7 @@
 #define CREW_H
 
 #include <sqlite3.h>
+#include "models/crew_struct.h"
 
 typedef struct {
     int helicopter_number;
@@ -15,7 +16,7 @@ typedef struct {
 } HelicopterInfo;
 
 // Функция для получения информации о члене экипажа по его табельному номеру
-void get_crew_member_info(sqlite3 *db, int tab_number);
+CrewMember* get_crew_member_report(sqlite3 *db, int tab_number);
 
 // Функция для получения информации о вертолете, закрепленном за членом экипажа
 HelicopterInfo get_helicopter_info(sqlite3 *db, int tab_number);

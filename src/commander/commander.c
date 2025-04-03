@@ -4,90 +4,69 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "commander.h"
-#include "validation.h"
+#include "../../include/commander/commander.h"
 
-// Функция для преобразования строки в дату (структура tm)
-struct tm string_to_date(const char *date_str) {
-    struct tm tm = {0};
-    strptime(date_str, "%Y-%m-%d", &tm);
-    return tm;
-}
-
-// Функция для получения и вывода данных по рейсам в указанном периоде
-void get_flights_data_by_period(sqlite3 *db) {
-    char start_date[11], end_date[11];
-
-    // Запрос периода
-    printf("Введите дату начала периода (YYYY-MM-DD): ");
-    scanf("%10s", start_date);
-    printf("Введите дату конца периода (YYYY-MM-DD): ");
-    scanf("%10s", end_date);
-
-    // Валидация формата дат
-    if (!validate_date(start_date) || !validate_date(end_date)) {
-        printf("Неверный формат даты. Пожалуйста, используйте YYYY-MM-DD.\n");
-        return;
+// Функция для получения и данных по рейсам в указанном периоде
+FlightPeriodReport* get_flights_report(sqlite3 *db, const char *start, const char *end) {
+    // Валидация дат (реализация должна быть предоставлена)
+    if (!validate_date(start) || !validate_date(end)) {
+        printf("Некорректный формат дат\n");
+        return NULL;
     }
 
     sqlite3_stmt *stmt;
-    const char *query = "SELECT h.helicopter_number, f.flight_code, f.cargo_weight, f.passengers_count "
-                        "FROM Flight f "
-                        "JOIN Helicopter h ON f.helicopter_number = h.helicopter_number "
-                        "WHERE f.date BETWEEN ? AND ? "
-                        "ORDER BY h.helicopter_number, f.date";
+    const char *sql = "SELECT h.helicopter_number, f.flight_code, f.cargo_weight, f.passengers_count "
+                      "FROM Flight f "
+                      "JOIN Helicopter h ON f.helicopter_number = h.helicopter_number "
+                      "WHERE f.date BETWEEN ? AND ? "
+                      "ORDER BY h.helicopter_number, f.date;";
 
-    // Подготовка SQL-запроса
-    if (sqlite3_prepare_v2(db, query, -1, &stmt, NULL) != SQLITE_OK) {
-        printf("Ошибка при подготовке запроса: %s\n", sqlite3_errmsg(db));
-        return;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) {
+        fprintf(stderr, "SQL error: %s\n", sqlite3_errmsg(db));
+        return NULL;
     }
 
-    // Привязка параметров
-    sqlite3_bind_text(stmt, 1, start_date, -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, 2, end_date, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 1, start, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 2, end, -1, SQLITE_STATIC);
 
-    // Переменные для хранения данных
-    int current_helicopter = -1;
-    double total_cargo = 0;
-    int total_passengers = 0;
+    FlightPeriodReport *root = NULL, *current = NULL;
+    int prev_helicopter = -1;
 
-    // Выполнение запроса и обработка результатов
     while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int helicopter_number = sqlite3_column_int(stmt, 0);
-        int flight_code = sqlite3_column_int(stmt, 1);
-        double cargo_weight = sqlite3_column_double(stmt, 2);
-        int passengers_count = sqlite3_column_int(stmt, 3);
+        int heli = sqlite3_column_int(stmt, 0);
+        int code = sqlite3_column_int(stmt, 1);
+        double cargo = sqlite3_column_double(stmt, 2);
+        int pass = sqlite3_column_int(stmt, 3);
 
-        if (helicopter_number != current_helicopter) {
-            if (current_helicopter != -1) {
-                // Выводим данные для предыдущего вертолета
-                printf("Общая масса: %.2f, количество человек: %d\n", total_cargo, total_passengers);
-            }
+        if (heli != prev_helicopter) {
+            FlightPeriodReport *new_node = calloc(1, sizeof(FlightPeriodReport));
+            new_node->helicopter_number = heli;
+            new_node->next = NULL;
 
-            // Новый вертолет
-            printf("\nHelicopter %d\n", helicopter_number);
-            current_helicopter = helicopter_number;
-            total_cargo = 0;
-            total_passengers = 0;
+            if (!root) root = new_node;
+            else current->next = new_node;
+
+            current = new_node;
+            prev_helicopter = heli;
         }
 
-        // Вывод данных о рейсе
-        printf("%d %.2f %d\n", flight_code, cargo_weight, passengers_count);
+        current->total_flights++;
+        current->flight_codes = realloc(current->flight_codes, current->total_flights * sizeof(int));
+        current->cargo_weights = realloc(current->cargo_weights, current->total_flights * sizeof(double));
+        current->passengers = realloc(current->passengers, current->total_flights * sizeof(int));
 
-        // Обновление общей массы и количества пассажиров
-        total_cargo += cargo_weight;
-        total_passengers += passengers_count;
+        current->flight_codes[current->total_flights-1] = code;
+        current->cargo_weights[current->total_flights-1] = cargo;
+        current->passengers[current->total_flights-1] = pass;
+
+        current->total_cargo += cargo;
+        current->total_passengers += pass;
     }
 
-    // Вывод итогов для последнего вертолета
-    if (current_helicopter != -1) {
-        printf("Общая масса: %.2f, количество человек: %d\n", total_cargo, total_passengers);
-    }
-
-    // Освобождение ресурсов
     sqlite3_finalize(stmt);
+    return root;
 }
+
 
 // Функция для получения налетанных часов и ресурса летного времени после капитального ремонта
 void get_flights_hours_after_repair(sqlite3 *db) {

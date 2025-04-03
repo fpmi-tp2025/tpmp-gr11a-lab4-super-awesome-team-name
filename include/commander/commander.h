@@ -3,6 +3,8 @@
 #define COMMANDER_H
 
 #include <sqlite3.h>
+#include "models/commander_struct.h"
+#include "../../include/validation.h"
 
 // структура для get_max_earning_crew
 typedef struct {
@@ -23,7 +25,7 @@ typedef struct {
 } max_earning_crew_t;
 
 // Функция для получения и вывода данных по рейсам в указанном периоде
-void get_flights_data_by_period(sqlite3 *db);
+FlightPeriodReport* get_flights_report(sqlite3 *db, const char *start, const char *end);
 
 // Функция для получения налетанных часов и ресурса летного времени после капитального ремонта
 void get_flights_hours_after_repair(sqlite3 *db);

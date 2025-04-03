@@ -1,26 +1,6 @@
-/* interface.c */
-
-#include "interface.h"
+/* commander_interface.c */
+#include "../include/interface.h"
 #include <stdio.h>
-
-// SELECT
-void get_flights_data_by_period(sqlite3 *db);
-void get_flights_hours_after_repair(sqlite3 *db);
-void get_special_flights_summary(sqlite3 *db);
-max_earning_crew_t get_max_earning_crew(sqlite3 *db);
-void get_helicopter_with_most_flights(sqlite3 *db);
-void get_normal_flights_summary(sqlite3 *db);
-
-// UPDATE
-int update_crew_member(sqlite3 *db);
-int update_flight(sqlite3 *db);
-int update_helicopter(sqlite3 *db);
-
-// INSERT
-int insert_crew_member(sqlite3 *db);
-
-// DELETE
-int delete_crew_member(sqlite3 *db);
 
 // Интерфейс для Commander
 void commander_interface(sqlite3 *db) {
@@ -100,6 +80,7 @@ void commander_interface(sqlite3 *db) {
                             break;
                         case 3:
                             update_helicopter(db);
+                            break;
                         default:
                             printf("Неверный выбор. Попробуйте снова.\n");
                     }
@@ -157,7 +138,7 @@ void commander_interface(sqlite3 *db) {
 }
 
 void get_crew_member_info(sqlite3 *db, int tab_number);
-HelicopterInfo get_helicopter_info(sqlite3 *db, int tab_number);
+void get_helicopter_info(sqlite3 *db, int tab_number);
 void get_flight_hours_for_crew_helicopter(sqlite3 *db, int tab_number);
 void get_flights_by_period_for_crew(sqlite3 *db, int tab_number);
 void calculate_crew_member_earnings(sqlite3 *db, int tab_number, const char *start_date, const char *end_date);
@@ -171,7 +152,7 @@ void crew_member_interface(sqlite3 *db, int tab_number) {
     int choice;
     char start_date[11], end_date[11];
     int flight_code;
-    
+
     // Основной цикл меню
     while (1) {
         printf("\nВы находитесь в интерфейсе для члена экипажа.\n");
@@ -187,28 +168,28 @@ void crew_member_interface(sqlite3 *db, int tab_number) {
         printf("0. Выйти\n");
         printf("Введите ваш выбор: ");
         scanf("%d", &choice);
-        
+
         switch (choice) {
             case 0:
                 printf("Выход из программы.\n");
                 return;
-                
+
             case 1:
                 get_crew_member_info(db, tab_number);
                 break;
-                
+
             case 2:
                 get_helicopter_info(db, tab_number);
                 break;
-                
+
             case 3:
                 get_flight_hours_for_crew_helicopter(db, tab_number);
                 break;
-                
+
             case 4:
                 get_flights_by_period_for_crew(db, tab_number);
                 break;
-                
+
             case 5:
                 printf("Введите дату начала периода (ГГГГ-ММ-ДД): ");
                 scanf("%10s", start_date);
@@ -216,21 +197,21 @@ void crew_member_interface(sqlite3 *db, int tab_number) {
                 scanf("%10s", end_date);
                 calculate_crew_member_earnings(db, tab_number, start_date, end_date);
                 break;
-                
+
             case 6:
                 printf("Введите код рейса: ");
                 scanf("%d", &flight_code);
                 calculate_crew_member_earnings_for_flight(db, tab_number, flight_code);
                 break;
-                
+
             case 7:
                 get_all_flights_for_crew(db, tab_number);
                 break;
-                
+
             case 8:
                 update_crew_member_info(db, tab_number);
                 break;
-                
+
             default:
                 printf("Неверный выбор. Попробуйте снова.\n");
         }
