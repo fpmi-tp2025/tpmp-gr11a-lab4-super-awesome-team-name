@@ -10,7 +10,7 @@
 FlightPeriodReport* get_flights_report(sqlite3 *db, const char *start, const char *end);
 
 // Функция для получения налетанных часов и ресурса летного времени после капитального ремонта
-void get_flights_hours_after_repair(sqlite3 *db);
+HelicopterHours* retrieve_flight_hours_data(sqlite3 *db, int *result_count);
 
 // Функция для получения общего количества рейсов, массы грузов и суммы заработанных денег по спецрейсам
 void get_special_flights_summary(sqlite3 *db);

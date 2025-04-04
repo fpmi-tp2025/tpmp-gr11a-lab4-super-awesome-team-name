@@ -39,3 +39,21 @@ void get_flights_data_by_period(sqlite3 *db) {
         free(tmp);
     }
 }
+
+void get_flights_hours_after_repair(sqlite3 *db) {
+    int result_count = 0;
+    HelicopterHours *data = retrieve_flight_hours_data(db, &result_count);
+
+    if (!data) {
+        printf("Данные не найдены или произошла ошибка\n\n");
+        return;
+    }
+
+    for (int i = 0; i < result_count; i++) {
+        printf("Helicopter %d\n", data[i].helicopter_number);
+        printf("Налетанные часы после капитального ремонта: %.2f\n", data[i].total_flight_hours);
+        printf("Ресурс летного времени: %d\n\n", data[i].flight_resource);
+    }
+
+    free(data);
+}

@@ -32,4 +32,12 @@ typedef struct {
     int flight_count;
 } max_earning_crew_t;
 
+// структура для get_flights_hours_after_repair
+typedef struct {
+    int helicopter_number;
+    double total_flight_hours;
+    int flight_resource;
+} HelicopterHours;
+
+
 #endif

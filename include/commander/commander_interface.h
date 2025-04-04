@@ -5,5 +5,6 @@
 #include "commander.h"
 
 void get_flights_data_by_period(sqlite3 *db);
+void get_flights_hours_after_repair(sqlite3 *db);
 
 #endif /* COMMANDER_INTERFACE_H */
