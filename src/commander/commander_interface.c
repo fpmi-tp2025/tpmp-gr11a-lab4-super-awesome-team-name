@@ -76,3 +76,34 @@ void get_special_flights_summary(sqlite3 *db) {
 
     free(data);
 }
+
+void get_max_earning_crew(sqlite3 *db) {
+    max_earning_crew_t data = retrieve_max_earning_crew_data(db);
+
+    if (data.helicopter_number == 0) {
+        printf("Данные не найдены\n");
+    }
+
+    // Форматированный вывод
+    printf("\nВертолет с максимальными заработками:\n");
+    printf("Номер: %d\nМодель: %s\nЗаработок: %.2f$\n",
+           data.helicopter_number,
+           data.helicopter_model,
+           data.total_earnings);
+
+    printf("\nСостав экипажа (%d чел.):\n", data.crew_count);
+    for (int i = 0; i < data.crew_count; i++) {
+        printf("%d. %s (таб. №%d)\n",
+               i+1,
+               data.crew_members[i].last_name,
+               data.crew_members[i].tab_number);
+    }
+
+    printf("\nПоследние рейсы (%d шт.):\n", data.flight_count);
+    for (int i = 0; i < data.flight_count; i++) {
+        printf("[%s] Рейс %d: %.2f$\n",
+               data.flights[i].date,
+               data.flights[i].flight_code,
+               data.flights[i].flight_cost);
+    }
+}

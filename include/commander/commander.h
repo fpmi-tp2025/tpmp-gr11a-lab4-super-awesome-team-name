@@ -16,7 +16,7 @@ HelicopterHours* retrieve_flight_hours_data(sqlite3 *db, int *result_count);
 SpecialFlightsSummary* retrieve_special_flights_data(sqlite3 *db, int *result_count);
 
 // Функция для вывода максимально заработавшего экипажа
-max_earning_crew_t get_max_earning_crew(sqlite3 *db);
+max_earning_crew_t retrieve_max_earning_crew_data(sqlite3 *db);
 
 // Информацию по вертолету и экипажу с макс кол-во рейсов
 void get_helicopter_with_most_flights(sqlite3 *db);
