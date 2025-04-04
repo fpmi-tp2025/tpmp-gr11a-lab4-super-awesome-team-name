@@ -47,4 +47,25 @@ typedef struct {
     double total_income;
 } SpecialFlightsSummary;
 
+// Структура для хранения данных о вертолете
+typedef struct {
+    int helicopter_number;
+    const char *helicopter_model;
+    int num_flights;
+    double total_earnings;
+} HelicopterData;
+
+// Структура для хранения данных о члене экипажа
+typedef struct {
+    int tab_number;
+    const char *last_name;
+} CrewMemberData;
+
+// Структура для связи данных о вертолете и его экипаже
+typedef struct {
+    HelicopterData helicopter;
+    CrewMemberData *crew_members;
+    int crew_count;
+} HelicopterWithCrewData;
+
 #endif

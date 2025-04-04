@@ -19,7 +19,8 @@ SpecialFlightsSummary* retrieve_special_flights_data(sqlite3 *db, int *result_co
 max_earning_crew_t retrieve_max_earning_crew_data(sqlite3 *db);
 
 // Информацию по вертолету и экипажу с макс кол-во рейсов
-void get_helicopter_with_most_flights(sqlite3 *db);
+//void get_helicopter_with_most_flights(sqlite3 *db);
+HelicopterWithCrewData* get_helicopter_with_crew_most_flights(sqlite3 *db);
 
 // Данные по вертолетам проводившие обычный рейс
 void get_normal_flights_summary(sqlite3 *db);

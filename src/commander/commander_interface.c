@@ -111,3 +111,39 @@ void get_max_earning_crew(sqlite3 *db) {
                data.flights[i].flight_cost);
     }
 }
+
+void get_helicopter_with_most_flights(sqlite3 *db) {
+    // Вызываем логику
+    HelicopterWithCrewData *data = get_helicopter_with_crew_most_flights(db);
+    
+    if (!data) {
+        printf("Не удалось найти вертолет с максимальным количеством рейсов.\n");
+        return;
+    }
+    
+    // Выводим информацию о вертолете
+    printf("Номер вертолета: %d\n", data->helicopter.helicopter_number);
+    printf("Модель вертолета: %s\n", data->helicopter.helicopter_model);
+    printf("Количество рейсов: %d\n", data->helicopter.num_flights);
+    printf("Количество заработанных денег: %.2f$\n", data->helicopter.total_earnings);
+    
+    // Выводим информацию о экипаже
+    printf("Экипаж:\n");
+    for (int i = 0; i < data->crew_count; i++) {
+        printf("Табельный номер: %d, Фамилия: %s\n", 
+               data->crew_members[i].tab_number, 
+               data->crew_members[i].last_name);
+    }
+    
+    // Освобождаем память
+    if (data) {
+        free((void*)data->helicopter.helicopter_model);
+        
+        for (int i = 0; i < data->crew_count; i++) {
+            free((void*)data->crew_members[i].last_name);
+        }
+        
+        free(data->crew_members);
+        free(data);
+    }
+}
