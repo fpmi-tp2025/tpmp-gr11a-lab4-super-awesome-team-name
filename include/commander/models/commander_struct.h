@@ -39,5 +39,12 @@ typedef struct {
     int flight_resource;
 } HelicopterHours;
 
+// структура для get_special_flights_summary
+typedef struct {
+    int helicopter_number;
+    int flights_count;
+    double total_cargo_weight;
+    double total_income;
+} SpecialFlightsSummary;
 
 #endif

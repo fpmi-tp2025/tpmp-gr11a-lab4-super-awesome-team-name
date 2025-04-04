@@ -57,3 +57,22 @@ void get_flights_hours_after_repair(sqlite3 *db) {
 
     free(data);
 }
+
+void get_special_flights_summary(sqlite3 *db) {
+    int result_count = 0;
+    SpecialFlightsSummary *data = retrieve_special_flights_data(db, &result_count);
+
+    if (!data) {
+        printf("Нет данных о спецрейсах или произошла ошибка\n\n");
+        return;
+    }
+
+    for (int i = 0; i < result_count; i++) {
+        printf("Helicopter %d\n", data[i].helicopter_number);
+        printf("Количество спецрейсов: %d\n", data[i].flights_count);
+        printf("Общая масса перевезенных грузов: %.2f\n", data[i].total_cargo_weight);
+        printf("Общая сумма заработанных денег: %.2f$\n\n", data[i].total_income);
+    }
+
+    free(data);
+}

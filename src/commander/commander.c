@@ -115,37 +115,51 @@ HelicopterHours* retrieve_flight_hours_data(sqlite3 *db, int *result_count) {
 }
 
 // Функция для получения общего количества рейсов, массы грузов и суммы заработанных денег по спецрейсам
-void get_special_flights_summary(sqlite3 *db) {
+SpecialFlightsSummary* retrieve_special_flights_data(sqlite3 *db, int *result_count) {
     sqlite3_stmt *stmt;
+    SpecialFlightsSummary *results = NULL;
+    int count = 0;
     const char *query = "SELECT h.helicopter_number, COUNT(f.flight_code), SUM(f.cargo_weight), SUM(f.flight_cost) "
                         "FROM Flight f "
                         "JOIN Helicopter h ON f.helicopter_number = h.helicopter_number "
                         "WHERE f.is_special = 1 "
                         "GROUP BY h.helicopter_number";
 
-    // Подготовка SQL-запроса
     if (sqlite3_prepare_v2(db, query, -1, &stmt, NULL) != SQLITE_OK) {
-        printf("Ошибка при подготовке запроса: %s\n", sqlite3_errmsg(db));
-        return;
+        printf("Ошибка подготовки запроса: %s\n", sqlite3_errmsg(db));
+        return NULL;
     }
 
-    // Выполнение запроса и обработка результатов
+    // Подсчет количества записей
     while (sqlite3_step(stmt) == SQLITE_ROW) {
-        int helicopter_number = sqlite3_column_int(stmt, 0);
-        int flight_count = sqlite3_column_int(stmt, 1);
-        double total_cargo_weight = sqlite3_column_double(stmt, 2);
-        double total_income = sqlite3_column_double(stmt, 3);
+        count++;
+    }
+    sqlite3_reset(stmt);
 
-        // Выводим информацию для каждого вертолета
-        printf("Helicopter %d\n", helicopter_number);
-        printf("Количество спецрейсов: %d\n", flight_count);
-        printf("Общая масса перевезенных грузов: %.2f\n", total_cargo_weight);
-        printf("Общая сумма заработанных денег: %.2f$\n", total_income);
-        printf("\n");
+    if (count == 0) {
+        sqlite3_finalize(stmt);
+        return NULL;
     }
 
-    // Освобождение ресурсов
+    // Выделение памяти
+    results = malloc(sizeof(SpecialFlightsSummary) * count);
+    if (!results) {
+        sqlite3_finalize(stmt);
+        return NULL;
+    }
+
+    // Заполнение структур
+    for (int i = 0; i < count; i++) {
+        sqlite3_step(stmt);
+        results[i].helicopter_number = sqlite3_column_int(stmt, 0);
+        results[i].flights_count = sqlite3_column_int(stmt, 1);
+        results[i].total_cargo_weight = sqlite3_column_double(stmt, 2);
+        results[i].total_income = sqlite3_column_double(stmt, 3);
+    }
+
+    *result_count = count;
     sqlite3_finalize(stmt);
+    return results;
 }
 
 max_earning_crew_t get_max_earning_crew(sqlite3 *db) {

@@ -13,7 +13,7 @@ FlightPeriodReport* get_flights_report(sqlite3 *db, const char *start, const cha
 HelicopterHours* retrieve_flight_hours_data(sqlite3 *db, int *result_count);
 
 // Функция для получения общего количества рейсов, массы грузов и суммы заработанных денег по спецрейсам
-void get_special_flights_summary(sqlite3 *db);
+SpecialFlightsSummary* retrieve_special_flights_data(sqlite3 *db, int *result_count);
 
 // Функция для вывода максимально заработавшего экипажа
 max_earning_crew_t get_max_earning_crew(sqlite3 *db);
