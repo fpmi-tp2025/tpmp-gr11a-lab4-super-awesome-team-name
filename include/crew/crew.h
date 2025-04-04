@@ -27,6 +27,6 @@ EarningsRecordForFlight retrieve_earnings_data_for_flight(sqlite3 *db, int tab_n
 FlightReport2 retrieve_all_flights_data(sqlite3* db, int tab_number);
 
 // Функция для обновления личной информации члена экипажа
-void update_crew_member_info(sqlite3 *db, int tab_number);
+OperationStatus update_crew_address(sqlite3 *db, const UpdateData *data);
 
 #endif // CREW_H

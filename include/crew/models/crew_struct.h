@@ -85,4 +85,16 @@ typedef struct {
     int data_exists;
 } FlightReport2;
 
+// update_crew_member_info
+typedef struct {
+    int success;
+    const char *error_message;
+} OperationStatus;
+
+// Структура для данных обновления
+typedef struct {
+    int tab_number;
+    char new_address[100];
+} UpdateData;
+
 #endif

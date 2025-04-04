@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <sqlite3.h>
 #include <stdlib.h>
+#include <string.h>
 
 void get_crew_member_info(sqlite3 *db, int tab_number) {
     CrewMember* member = get_crew_member_report(db, tab_number);
@@ -187,3 +188,38 @@ void get_all_flights_for_crew(sqlite3* db, int tab_number) {
     // Освобождение памяти
     if (report.data_exists) free(report.records);
 }
+
+void update_crew_member_info(sqlite3 *db, int tab_number) {
+    // Получение новых данных
+    UpdateData data = {.tab_number = tab_number};
+
+    // Очистка буфера ввода
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF) { }
+
+    printf("Введите новый адрес (макс. %zu символов): ", sizeof(data.new_address)-1);
+
+    if (!fgets(data.new_address, sizeof(data.new_address), stdin)) {
+        printf("Ошибка чтения ввода\n");
+        return;
+    }
+
+    // Удаление символа новой строки
+    size_t len = strlen(data.new_address);
+    if (len > 0 && data.new_address[len-1] == '\n') {
+        data.new_address[len-1] = '\0';
+    } else {
+        // Очистка буфера если ввод превысил размер
+        while ((c = getchar()) != '\n' && c != EOF) { }
+    }
+
+    // Выполнение обновления
+    OperationStatus update_status = update_crew_address(db, &data);
+
+    if (update_status.success) {
+        printf("Адрес успешно обновлен\nНовые данные: %s\n", data.new_address);
+    } else {
+        printf("Ошибка обновления: %s\n", update_status.error_message);
+    }
+}
+

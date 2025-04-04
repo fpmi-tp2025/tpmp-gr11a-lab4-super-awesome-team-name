@@ -330,59 +330,24 @@ FlightReport2 retrieve_all_flights_data(sqlite3* db, int tab_number) {
     return report;
 }
 
-// Функция для обновления личной информации члена экипажа
-void update_crew_member_info(sqlite3 *db, int tab_number) {
-    char new_value[100];
-    
-    // Проверка существования члена экипажа
-    sqlite3_stmt *check_stmt;
-    const char *check_query = "SELECT COUNT(*) FROM Crew_member WHERE tab_number = ?";
-    
-    if (sqlite3_prepare_v2(db, check_query, -1, &check_stmt, NULL) != SQLITE_OK) {
-        printf("Ошибка при подготовке запроса: %s\n", sqlite3_errmsg(db));
+// Логическая часть: обновление адреса
+OperationStatus update_crew_address(sqlite3 *db, const UpdateData *data) {
+    sqlite3_stmt *stmt;
+    OperationStatus status = {0};
+
+    const char *query = "UPDATE Crew_member SET address = ? WHERE tab_number = ?";
+
+    if (sqlite3_prepare_v2(db, query, -1, &stmt, NULL) != SQLITE_OK) {
+        status.error_message = sqlite3_errmsg(db);
+        return status;
     }
-    
-    sqlite3_bind_int(check_stmt, 1, tab_number);
-    
-    if (sqlite3_step(check_stmt) == SQLITE_ROW) {
-        int count = sqlite3_column_int(check_stmt, 0);
-        if (count == 0) {
-            printf("Член экипажа с табельным номером %d не существует.\n", tab_number);
-            sqlite3_finalize(check_stmt);
-        }
-    }
-    
-    sqlite3_finalize(check_stmt);
-    
-    // Член экипажа может обновить только свой адрес
-    printf("Вы можете обновить только свой адрес.\n");
-    
-    // Получение нового адреса
-    printf("Введите новый адрес: ");
-    // Очистка буфера ввода
-    getchar();
-    fgets(new_value, sizeof(new_value), stdin);
-    // Удаление символа новой строки
-    new_value[strcspn(new_value, "\n")] = 0;
-    
-    // Обновление адреса в базе данных
-    sqlite3_stmt *update_stmt;
-    const char *update_query = "UPDATE Crew_member SET address = ? WHERE tab_number = ?";
-    
-    if (sqlite3_prepare_v2(db, update_query, -1, &update_stmt, NULL) != SQLITE_OK) {
-        printf("Ошибка при подготовке запроса обновления: %s\n", sqlite3_errmsg(db));
-    }
-    
-    sqlite3_bind_text(update_stmt, 1, new_value, -1, SQLITE_STATIC);
-    sqlite3_bind_int(update_stmt, 2, tab_number);
-    
-    if (sqlite3_step(update_stmt) != SQLITE_DONE) {
-        printf("Ошибка при обновлении адреса: %s\n", sqlite3_errmsg(db));
-        sqlite3_finalize(update_stmt);
-    }
-    
-    printf("Адрес успешно обновлен.\n");
-    
-    // Освобождение ресурсов
-    sqlite3_finalize(update_stmt);
+
+    sqlite3_bind_text(stmt, 1, data->new_address, -1, SQLITE_STATIC);
+    sqlite3_bind_int(stmt, 2, data->tab_number);
+
+    status.success = (sqlite3_step(stmt) == SQLITE_DONE);
+    if (!status.success) status.error_message = sqlite3_errmsg(db);
+
+    sqlite3_finalize(stmt);
+    return status;
 }
