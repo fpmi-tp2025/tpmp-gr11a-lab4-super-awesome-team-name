@@ -27,3 +27,35 @@ void get_crew_member_info(sqlite3 *db, int tab_number) {
         free(member);
     }
 }
+
+void get_helicopter_info(sqlite3 *db, int tab_number) {
+    HelicopterInfo info = retrieve_helicopter_info_data(db, tab_number);
+
+    if(info.found) {
+        printf("\n=== Helicopter Information ===\n"
+               "Number:    %d\n"
+               "Model:     %s\n"
+               "Manufacture date: %s\n"
+               "Payload:   %.2f kg\n"
+               "Last Repair: %s\n"
+               "Resource:  %d hours\n",
+               info.helicopter_number,
+               info.model,
+               info.manufacture_date,
+               info.max_payload,
+               info.last_repair_date,
+               info.flight_resource);
+    } else {
+        printf("No helicopter found for crew member #%d\n", tab_number);
+    }
+
+    // Освобождение памяти
+    free(info.model);
+    free(info.manufacture_date);
+    free(info.last_repair_date);
+
+    // Сброс указателей
+    info.model = NULL;
+    info.manufacture_date = NULL;
+    info.last_repair_date = NULL;
+}

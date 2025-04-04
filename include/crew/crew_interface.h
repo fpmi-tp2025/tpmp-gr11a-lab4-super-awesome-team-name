@@ -1,3 +1,4 @@
+/* crew_interface.h */
 #ifndef CREW_INTERFACE_H
 #define CREW_INTERFACE_H
 
@@ -6,5 +7,6 @@
 #include "crew.h"
 
 void get_crew_member_info(sqlite3 *db, int tab_number);
+void get_helicopter_info(sqlite3 *db, int tab_number);
 
 #endif /* CREW_INTERFACE_H */
