@@ -12,10 +12,10 @@ CrewMember* get_crew_member_report(sqlite3 *db, int tab_number);
 HelicopterInfo retrieve_helicopter_info_data(sqlite3 *db, int tab_number);
 
 // Функция для получения налетанных часов и оставшегося ресурса вертолета члена экипажа
-void get_flight_hours_for_crew_helicopter(sqlite3 *db, int tab_number);
+FlightHoursInfo retrieve_flight_hours_data_crew(sqlite3 *db, int tab_number);
 
 // Функция для получения данных о рейсах вертолета члена экипажа за указанный период
-void get_flights_by_period_for_crew(sqlite3 *db, int tab_number);
+FlightReport retrieve_flights_report(sqlite3 *db, int tab_number, const char *start_date, const char *end_date);
 
 // Функция для расчета денег, заработанных членом экипажа за определенный период
 void calculate_crew_member_earnings(sqlite3 *db, int tab_number, const char *start_date, const char *end_date);

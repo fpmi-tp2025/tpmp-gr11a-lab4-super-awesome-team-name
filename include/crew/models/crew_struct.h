@@ -24,4 +24,30 @@ typedef struct {
     int found;
 } HelicopterInfo;
 
+// retrieve_flight_hours_data
+typedef struct {
+    int helicopter_number;
+    double total_flight_hours;
+    int flight_resource;
+    int data_exists;
+} FlightHoursInfo;
+
+// retrieve_flights_report
+typedef struct {
+    char date[11];
+    int flight_code;
+    double cargo_weight;
+    int passengers_count;
+    double flight_duration;
+    double flight_cost;
+    int is_special;
+} FlightRecord;
+
+typedef struct {
+    FlightRecord *records;
+    int count;
+    double total_cargo;
+    int total_passengers;
+} FlightReport;
+
 #endif

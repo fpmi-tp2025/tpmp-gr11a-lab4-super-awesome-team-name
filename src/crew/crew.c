@@ -93,118 +93,92 @@ HelicopterInfo retrieve_helicopter_info_data(sqlite3 *db, int tab_number) {
 }
 
 // Функция для получения налетанных часов и оставшегося ресурса вертолета члена экипажа
-void get_flight_hours_for_crew_helicopter(sqlite3 *db, int tab_number) {
+FlightHoursInfo retrieve_flight_hours_data_crew(sqlite3 *db, int tab_number) {
     sqlite3_stmt *stmt;
-    const char *query = "SELECT h.helicopter_number, SUM(f.flight_duration), h.flight_resource "
-                        "FROM Flight f "
-                        "JOIN Helicopter h ON f.helicopter_number = h.helicopter_number "
-                        "JOIN Crew_member cm ON h.helicopter_number = cm.helicopter_number "
-                        "WHERE cm.tab_number = ? AND f.date > h.last_repair_date "
-                        "GROUP BY h.helicopter_number";
-    
-    // Подготовка SQL-запроса
+    FlightHoursInfo result = {0};
+    const char *query =
+            "SELECT h.helicopter_number, SUM(f.flight_duration), h.flight_resource "
+            "FROM Flight f "
+            "JOIN Helicopter h ON f.helicopter_number = h.helicopter_number "
+            "JOIN Crew_member cm ON h.helicopter_number = cm.helicopter_number "
+            "WHERE cm.tab_number = ? AND f.date > h.last_repair_date "
+            "GROUP BY h.helicopter_number";
+
     if (sqlite3_prepare_v2(db, query, -1, &stmt, NULL) != SQLITE_OK) {
-        printf("Ошибка при подготовке запроса: %s\n", sqlite3_errmsg(db));
-        return;
+        fprintf(stderr, "Ошибка подготовки запроса: %s\n", sqlite3_errmsg(db));
+        return result;
     }
-    
-    // Привязка параметров
+
     sqlite3_bind_int(stmt, 1, tab_number);
-    
-    // Выполнение запроса и обработка результатов
+
     if (sqlite3_step(stmt) == SQLITE_ROW) {
-        int helicopter_number = sqlite3_column_int(stmt, 0);
-        double total_flight_hours = sqlite3_column_double(stmt, 1);
-        int flight_resource = sqlite3_column_int(stmt, 2);
-        
-        printf("Вертолет %d\n", helicopter_number);
-        printf("Общее количество налетанных часов после последнего ремонта: %.2f\n", total_flight_hours);
-        printf("Ресурс летного времени: %d часов\n", flight_resource);
-        printf("Оставшийся ресурс: %.2f часов\n", flight_resource - total_flight_hours);
-    } else {
-        printf("Не найдены данные о полетах для члена экипажа с табельным номером %d.\n", tab_number);
+        result.helicopter_number = sqlite3_column_int(stmt, 0);
+        result.total_flight_hours = sqlite3_column_double(stmt, 1);
+        result.flight_resource = sqlite3_column_int(stmt, 2);
+        result.data_exists = 1;
     }
-    
-    // Освобождение ресурсов
+
     sqlite3_finalize(stmt);
+    return result;
 }
 
 // Функция для получения данных о рейсах вертолета члена экипажа за указанный период
-void get_flights_by_period_for_crew(sqlite3 *db, int tab_number) {
-    char start_date[11], end_date[11];
-    
-    // Запрос периода
-    printf("Введите дату начала периода (ГГГГ-ММ-ДД): ");
-    scanf("%10s", start_date);
-    printf("Введите дату конца периода (ГГГГ-ММ-ДД): ");
-    scanf("%10s", end_date);
-    
-    // Проверка формата даты
-    if (!validate_date(start_date) || !validate_date(end_date)) {
-        printf("Неверный формат даты. Используйте формат ГГГГ-ММ-ДД.\n");
-        return;
-    }
-    
+FlightReport retrieve_flights_report(sqlite3 *db, int tab_number, const char *start_date, const char *end_date) {
     sqlite3_stmt *stmt;
-    const char *query = "SELECT f.date, f.flight_code, f.cargo_weight, f.passengers_count, "
-                        "f.flight_duration, f.flight_cost, f.is_special "
-                        "FROM Flight f "
-                        "JOIN Crew_member cm ON f.helicopter_number = cm.helicopter_number "
-                        "WHERE cm.tab_number = ? AND f.date BETWEEN ? AND ? "
-                        "ORDER BY f.date";
-    
-    // Подготовка SQL-запроса
+    FlightReport report = {0};
+    const char *query =
+            "SELECT f.date, f.flight_code, f.cargo_weight, f.passengers_count, "
+            "f.flight_duration, f.flight_cost, f.is_special "
+            "FROM Flight f "
+            "JOIN Crew_member cm ON f.helicopter_number = cm.helicopter_number "
+            "WHERE cm.tab_number = ? AND f.date BETWEEN ? AND ? "
+            "ORDER BY f.date";
+
     if (sqlite3_prepare_v2(db, query, -1, &stmt, NULL) != SQLITE_OK) {
-        printf("Ошибка при подготовке запроса: %s\n", sqlite3_errmsg(db));
-        return;
+        fprintf(stderr, "Ошибка подготовки запроса: %s\n", sqlite3_errmsg(db));
+        return report;
     }
-    
-    // Привязка параметров
+
     sqlite3_bind_int(stmt, 1, tab_number);
     sqlite3_bind_text(stmt, 2, start_date, -1, SQLITE_STATIC);
     sqlite3_bind_text(stmt, 3, end_date, -1, SQLITE_STATIC);
-    
-    // Переменные для хранения данных
-    double total_cargo = 0;
-    int total_passengers = 0;
-    int flight_count = 0;
-    
-    // Выполнение запроса и обработка результатов
-    printf("\nРейсы с %s по %s:\n", start_date, end_date);
-    printf("Дата\t\tКод\tГруз\tПассажиры\tДлительность\tСтоимость\tТип\n");
-    
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        const char *date = (const char*)sqlite3_column_text(stmt, 0);
-        int flight_code = sqlite3_column_int(stmt, 1);
-        double cargo_weight = sqlite3_column_double(stmt, 2);
-        int passengers_count = sqlite3_column_int(stmt, 3);
-        double flight_duration = sqlite3_column_double(stmt, 4);
-        double flight_cost = sqlite3_column_double(stmt, 5);
-        int is_special = sqlite3_column_int(stmt, 6);
-        
-        printf("%s\t%d\t%.2f\t%d\t\t%.2f\t\t%.2f\t\t%s\n", 
-               date, flight_code, cargo_weight, passengers_count, 
-               flight_duration, flight_cost, is_special ? "Спецрейс" : "Обычный");
-        
-        // Обновление итогов
-        total_cargo += cargo_weight;
-        total_passengers += passengers_count;
-        flight_count++;
+
+    // Первый проход для подсчета записей
+    while (sqlite3_step(stmt) == SQLITE_ROW) report.count++;
+    sqlite3_reset(stmt);
+
+    if (report.count == 0) {
+        sqlite3_finalize(stmt);
+        return report;
     }
-    
-    // Вывод сводки
-    if (flight_count > 0) {
-        printf("\nСводка:\n");
-        printf("Общее количество рейсов: %d\n", flight_count);
-        printf("Общая масса груза: %.2f кг\n", total_cargo);
-        printf("Общее количество пассажиров: %d\n", total_passengers);
-    } else {
-        printf("Рейсы в указанном периоде не найдены.\n");
+
+    report.records = malloc(sizeof(FlightRecord) * report.count);
+    if (!report.records) {
+        sqlite3_finalize(stmt);
+        report.count = 0;
+        return report;
     }
-    
-    // Освобождение ресурсов
+
+    // Второй проход для заполнения данных
+    for (int i = 0; i < report.count; i++) {
+        sqlite3_step(stmt);
+
+        strncpy(report.records[i].date, (const char*)sqlite3_column_text(stmt, 0), 10);
+        report.records[i].flight_code = sqlite3_column_int(stmt, 1);
+        report.records[i].cargo_weight = sqlite3_column_double(stmt, 2);
+        report.records[i].passengers_count = sqlite3_column_int(stmt, 3);
+        report.records[i].flight_duration = sqlite3_column_double(stmt, 4);
+        report.records[i].flight_cost = sqlite3_column_double(stmt, 5);
+        report.records[i].is_special = sqlite3_column_int(stmt, 6);
+
+        report.total_cargo += report.records[i].cargo_weight;
+        report.total_passengers += report.records[i].passengers_count;
+    }
+
     sqlite3_finalize(stmt);
+    return report;
 }
+
 
 // Функция для расчета денег, заработанных членом экипажа за определенный период
 void calculate_crew_member_earnings(sqlite3 *db, int tab_number, const char *start_date, const char *end_date) {
