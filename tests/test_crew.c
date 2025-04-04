@@ -78,7 +78,7 @@ Suite* helicopter_suite(void) {
     Suite* s;
     TCase* tc_core;
 
-    s = suite_create("Helicopter");
+    s = suite_create("Crew");
 
     tc_core = tcase_create("Core");
 

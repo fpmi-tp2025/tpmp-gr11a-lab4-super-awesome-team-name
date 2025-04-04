@@ -67,7 +67,7 @@ Suite* flight_suite(void) {
     Suite* s;
     TCase* tc_core;
 
-    s = suite_create("Flight");
+    s = suite_create("Validation");
 
     tc_core = tcase_create("Core");
 

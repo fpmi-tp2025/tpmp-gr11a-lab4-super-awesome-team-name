@@ -52,7 +52,7 @@ void free_report(FlightPeriodReport *report) {
 }
 
 // Тест для get_max_earning_crew
-START_TEST(test_get_max_earning_crew) {
+START_TEST(test_retrieve_max_earning_crew_data) {
         sqlite3 *db = connect_db(":memory:");
         initialize_db(db);
 
@@ -63,7 +63,7 @@ START_TEST(test_get_max_earning_crew) {
         "INSERT INTO Flight VALUES (2001, 101, 1000.50, NULL, NULL, '2025-04-01');",
         NULL, NULL, NULL);
 
-        max_earning_crew_t result = get_max_earning_crew(db);
+        max_earning_crew_t result = retrieve_max_earning_crew_data(db);
 
         ck_assert_int_eq(result.helicopter_number, 101);
         ck_assert_str_eq(result.helicopter_model, "Model X");
@@ -112,7 +112,7 @@ Suite* commander_suite(void) {
     Suite *s = suite_create("Commander");
     TCase *tc_core = tcase_create("Core");
 
-    tcase_add_test(tc_core, test_get_max_earning_crew);
+    tcase_add_test(tc_core, test_retrieve_max_earning_crew_data);
     tcase_add_test(tc_core, test_get_flights_report);
     tcase_add_test(tc_core, test_invalid_dates);
 

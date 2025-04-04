@@ -12,6 +12,10 @@ void get_flights_data_by_period(sqlite3 *db) {
     printf("Введите конечную дату (YYYY-MM-DD): ");
     scanf("%10s", end);
 
+    if (!validate_date(start) || !validate_date(end)) {
+        printf("Некорректный формат дат\n");
+    }
+
     FlightPeriodReport *report = get_flights_report(db, start, end);
     if (!report) return;
 

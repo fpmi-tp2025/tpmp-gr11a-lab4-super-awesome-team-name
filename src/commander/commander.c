@@ -8,12 +8,6 @@
 
 // Функция для получения и данных по рейсам в указанном периоде
 FlightPeriodReport* get_flights_report(sqlite3 *db, const char *start, const char *end) {
-    // Валидация дат (реализация должна быть предоставлена)
-    if (!validate_date(start) || !validate_date(end)) {
-        printf("Некорректный формат дат\n");
-        return NULL;
-    }
-
     sqlite3_stmt *stmt;
     const char *sql = "SELECT h.helicopter_number, f.flight_code, f.cargo_weight, f.passengers_count "
                       "FROM Flight f "
