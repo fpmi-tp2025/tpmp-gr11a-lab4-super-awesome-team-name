@@ -50,4 +50,21 @@ typedef struct {
     int total_passengers;
 } FlightReport;
 
+//
+typedef struct {
+    char date[11];
+    int flight_code;
+    double flight_cost;
+    int is_special;
+    int passengers_count;
+    double earnings;
+} EarningsRecord;
+
+typedef struct {
+    EarningsRecord *records;
+    double total_earnings;
+    int flight_count;
+    int data_exists;
+} EarningsReport;
+
 #endif

@@ -112,3 +112,34 @@ void get_flights_by_period_for_crew(sqlite3 *db, int tab_number) {
         printf("Рейсы в указанном периоде не найдены.\n");
     }
 }
+
+void calculate_crew_member_earnings(sqlite3 *db, int tab_number,
+                                    const char *start_date, const char *end_date) {
+    if (!validate_date(start_date) || !validate_date(end_date)) {
+        printf("Неверный формат даты. Используйте ГГГГ-ММ-ДД.\n");
+        return;
+    }
+
+    EarningsReport report = retrieve_earnings_data(db, tab_number, start_date, end_date);
+
+    if (!report.data_exists) {
+        printf("Рейсы за период %s - %s не найдены.\n", start_date, end_date);
+        return;
+    }
+
+    printf("\nЗаработок за период %s - %s:\n", start_date, end_date);
+    printf("------------------------------------------------------------\n");
+    printf("Дата       | Код  | Стоимость | Пасс. | Заработок | Тип\n");
+    printf("------------------------------------------------------------\n");
+
+    for (int i = 0; i < report.flight_count; i++) {
+        EarningsRecord *r = &report.records[i];
+        printf("%-10s | %-4d | %-9.2f | %-5d | %-9.2f | %s\n",
+               r->date, r->flight_code, r->flight_cost,
+               r->passengers_count, r->earnings,
+               r->is_special ? "Спецрейс" : "Обычный");
+    }
+
+    printf("\nИтого: %.2f руб. за %d рейсов\n", report.total_earnings, report.flight_count);
+    free(report.records);
+}
