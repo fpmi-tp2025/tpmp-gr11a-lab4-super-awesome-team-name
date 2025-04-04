@@ -143,3 +143,21 @@ void calculate_crew_member_earnings(sqlite3 *db, int tab_number,
     printf("\nИтого: %.2f руб. за %d рейсов\n", report.total_earnings, report.flight_count);
     free(report.records);
 }
+
+void calculate_crew_member_earnings_for_flight(sqlite3 *db, int tab_number, int flight_code) {
+    EarningsRecordForFlight record = retrieve_earnings_data_for_flight(db, tab_number, flight_code);
+
+    if (record.data_exists) {
+        printf("\nДетали рейса:\n");
+        printf("----------------------------------------\n");
+        printf("Код рейса:      %d\n", record.flight_code);
+        printf("Дата:           %s\n", record.date);
+        printf("Стоимость:      %.2f руб.\n", record.flight_cost);
+        printf("Пассажиры:      %d\n", record.passengers_count);
+        printf("Тип рейса:      %s\n", record.is_special ? "Спецрейс" : "Обычный");
+        printf("----------------------------------------\n");
+        printf("Заработок:      %.2f руб.\n", record.earnings);
+    } else {
+        printf("Рейс %d для сотрудника %d не найден\n", flight_code, tab_number);
+    }
+}

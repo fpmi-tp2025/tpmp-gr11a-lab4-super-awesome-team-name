@@ -67,4 +67,15 @@ typedef struct {
     int data_exists;
 } EarningsReport;
 
+//
+typedef struct {
+    char date[11];
+    int flight_code;
+    double flight_cost;
+    int is_special;
+    int passengers_count;
+    double earnings;
+    int data_exists;
+} EarningsRecordForFlight;
+
 #endif

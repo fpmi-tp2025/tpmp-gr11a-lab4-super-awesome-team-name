@@ -21,7 +21,7 @@ FlightReport retrieve_flights_report(sqlite3 *db, int tab_number, const char *st
 EarningsReport retrieve_earnings_data(sqlite3 *db, int tab_number, const char *start_date, const char *end_date);
 
 // Функция для расчета денег, заработанных членом экипажа за конкретный рейс
-void calculate_crew_member_earnings_for_flight(sqlite3 *db, int tab_number, int flight_code);
+EarningsRecordForFlight retrieve_earnings_data_for_flight(sqlite3 *db, int tab_number, int flight_code);
 
 // Функция для получения информации о всех рейсах члена экипажа
 void get_all_flights_for_crew(sqlite3 *db, int tab_number);

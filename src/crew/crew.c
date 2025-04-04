@@ -240,46 +240,39 @@ EarningsReport retrieve_earnings_data(sqlite3 *db, int tab_number, const char *s
 }
 
 // Функция для расчета денег, заработанных членом экипажа за конкретный рейс
-void calculate_crew_member_earnings_for_flight(sqlite3 *db, int tab_number, int flight_code) {
+EarningsRecordForFlight retrieve_earnings_data_for_flight(sqlite3 *db, int tab_number, int flight_code) {
     sqlite3_stmt *stmt;
-    const char *query = "SELECT f.date, f.flight_cost, f.is_special, f.passengers_count "
-                        "FROM Flight f "
-                        "JOIN Crew_member cm ON f.helicopter_number = cm.helicopter_number "
-                        "WHERE cm.tab_number = ? AND f.flight_code = ?";
-    
-    // Подготовка SQL-запроса
+    EarningsRecordForFlight record = {0};
+    const char *query =
+            "SELECT f.date, f.flight_cost, f.is_special, f.passengers_count "
+            "FROM Flight f "
+            "JOIN Crew_member cm ON f.helicopter_number = cm.helicopter_number "
+            "WHERE cm.tab_number = ? AND f.flight_code = ?";
+
     if (sqlite3_prepare_v2(db, query, -1, &stmt, NULL) != SQLITE_OK) {
-        printf("Ошибка при подготовке запроса: %s\n", sqlite3_errmsg(db));
-        return;
+        fprintf(stderr, "Ошибка подготовки запроса: %s\n", sqlite3_errmsg(db));
+        return record;
     }
-    
-    // Привязка параметров
+
     sqlite3_bind_int(stmt, 1, tab_number);
     sqlite3_bind_int(stmt, 2, flight_code);
-    
-    // Выполнение запроса и обработка результатов
+
     if (sqlite3_step(stmt) == SQLITE_ROW) {
-        const char *date = (const char*)sqlite3_column_text(stmt, 0);
-        double flight_cost = sqlite3_column_double(stmt, 1);
-        int is_special = sqlite3_column_int(stmt, 2);
-        int passengers_count = sqlite3_column_int(stmt, 3);
-        
-        // Расчет заработка (5% для обычных рейсов, 10% для спецрейсов)
-        double earnings_percentage = is_special ? 0.10 : 0.05;
-        double earnings = (flight_cost * earnings_percentage * passengers_count) / 3;  // Деление на 3 для каждого члена экипажа
-        
-        printf("Код рейса: %d\n", flight_code);
-        printf("Дата: %s\n", date);
-        printf("Стоимость рейса: %.2f руб.\n", flight_cost);
-        printf("Количество пассажиров: %d\n", passengers_count);
-        printf("Тип рейса: %s\n", is_special ? "Спецрейс" : "Обычный");
-        printf("Заработок: %.2f руб.\n", earnings);
-    } else {
-        printf("Рейс с кодом %d не найден для члена экипажа с табельным номером %d.\n", flight_code, tab_number);
+        // Заполнение данных
+        strncpy(record.date, (const char*)sqlite3_column_text(stmt, 0), sizeof(record.date)-1);
+        record.flight_code = flight_code;
+        record.flight_cost = sqlite3_column_double(stmt, 1);
+        record.is_special = sqlite3_column_int(stmt, 2);
+        record.passengers_count = sqlite3_column_int(stmt, 3);
+
+        // Расчет заработка
+        double percentage = record.is_special ? 0.10 : 0.05;
+        record.earnings = (record.flight_cost * percentage * record.passengers_count) / 3;
+        record.data_exists = 1;
     }
-    
-    // Освобождение ресурсов
+
     sqlite3_finalize(stmt);
+    return record;
 }
 
 // Функция для получения информации о всех рейсах члена экипажа
