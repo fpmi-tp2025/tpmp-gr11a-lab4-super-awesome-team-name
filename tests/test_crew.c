@@ -28,8 +28,8 @@ void initialize_db(sqlite3* db) {
     }
 }
 
-// Тест для функции get_helicopter_info
-START_TEST(test_get_helicopter_info) {
+// Тест для функции retrieve_helicopter_info_data
+START_TEST(test_retrieve_helicopter_info_data) {
         sqlite3 *db = connect_db(":memory:");
         initialize_db(db);
 
@@ -58,7 +58,7 @@ START_TEST(test_get_helicopter_info) {
         sqlite3_finalize(stmt_crew);
 
         // Выполняем тест
-        HelicopterInfo result = get_helicopter_info(db, 1234);
+        HelicopterInfo result = retrieve_helicopter_info_data(db, 1234);
 
         // Проверяем результаты
         ck_assert_int_eq(result.helicopter_number, 101);
@@ -82,7 +82,7 @@ Suite* helicopter_suite(void) {
 
     tc_core = tcase_create("Core");
 
-    tcase_add_test(tc_core, test_get_helicopter_info);
+    tcase_add_test(tc_core, test_retrieve_helicopter_info_data);
     suite_add_tcase(s, tc_core);
 
     return s;
