@@ -4,11 +4,12 @@ on:
   push:
     branches:
       - main
-      - test_development
       - new_structure
+      - new_structure_test_develop
   pull_request:
     branches:
       - main
+      - new_structure
 
 jobs:
   build:

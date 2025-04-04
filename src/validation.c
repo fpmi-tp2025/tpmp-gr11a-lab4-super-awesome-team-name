@@ -76,16 +76,29 @@ int validate_number(const char *str) {
 
 // Проверка для чисел с плавающей точкой
 int validate_float(const char *str) {
+    size_t len = strlen(str);
+    if (len == 0) return 0;  // Пустая строка
+
     int dot_count = 0;
-    while (*str) {
-        if (*str == '.') {
+
+    // Проверка каждого символа
+    for (size_t i = 0; i < len; i++) {
+        if (str[i] == '.') {
             dot_count++;
-            if (dot_count > 1) return 0;
-        } else if (*str < '0' || *str > '9') {
-            return 0;
+            if (dot_count > 1) return 0;  // Больше одной точки
         }
-        str++;
+        else if (str[i] < '0' || str[i] > '9') {
+            return 0;  // Не цифра
+        }
     }
+
+    // Проверка положения точки
+    if (dot_count > 0) {
+        if (str[0] == '.' || str[len-1] == '.') {
+            return 0;  // Точка в начале или конце
+        }
+    }
+
     return 1;
 }
 

@@ -1,7 +1,9 @@
+/* test_validation.c */
 #include <check.h>
 #include <stdlib.h>
 #include <sqlite3.h>
 #include <stdio.h>
+#include <string.h>
 #include "../include/validation.h"
 
 // Тестируемая функция
@@ -62,18 +64,57 @@ START_TEST(test_validate_flight_code) {
 }
 END_TEST
 
-// Создание тестового набора
+START_TEST(test_validate_float) {
+    // Валидные значения
+    ck_assert_int_eq(validate_float("123.45"), 1);
+    ck_assert_int_eq(validate_float("987654321"), 1);
+    ck_assert_int_eq(validate_float("0.123"), 1);
+
+    // Невалидные значения
+    ck_assert_int_eq(validate_float("12.34.56"), 0);  // Две точки
+    ck_assert_int_eq(validate_float("123a45"), 0);    // Буква
+    ck_assert_int_eq(validate_float("12.3.4"), 0);    // Две точки
+    ck_assert_int_eq(validate_float(".123"), 0);      // Точка в начале
+    ck_assert_int_eq(validate_float("123."), 0);      // Точка в конце
+    ck_assert_int_eq(validate_float(""), 0);          // Пустая строка
+    ck_assert_int_eq(validate_float("  123.45  "), 0); // Пробелы
+}
+END_TEST
+
+// Тест для validate_is_special
+START_TEST(test_validate_is_special) {
+    // Корректные варианты "нет"
+    ck_assert_int_eq(validate_is_special("0"), 0);
+    ck_assert_int_eq(validate_is_special("нет"), 0);
+
+    // Корректные варианты "да"
+    ck_assert_int_eq(validate_is_special("1"), 1);
+    ck_assert_int_eq(validate_is_special("да"), 1);
+
+    // Некорректные значения
+    ck_assert_int_eq(validate_is_special("2"), -1);
+    ck_assert_int_eq(validate_is_special("д"), -1);
+    ck_assert_int_eq(validate_is_special("н"), -1);
+    ck_assert_int_eq(validate_is_special("yes"), -1);
+    ck_assert_int_eq(validate_is_special("no"), -1);
+    ck_assert_int_eq(validate_is_special(""), -1);
+    ck_assert_int_eq(validate_is_special(" "), -1);
+}
+END_TEST
+
+// Создаем тестовый набор
 Suite* flight_suite(void) {
     Suite* s;
     TCase* tc_core;
 
     s = suite_create("Validation");
-
     tc_core = tcase_create("Core");
 
-    tcase_add_test(tc_core, test_validate_flight_code);  // Добавляем тест
-    suite_add_tcase(s, tc_core);
+    tcase_add_test(tc_core, test_validate_flight_code);
+    tcase_add_test(tc_core, test_validate_float);      // Добавляем новые тесты
+    tcase_add_test(tc_core, test_validate_is_special);
 
+    suite_add_tcase(s, tc_core);
     return s;
 }
 
