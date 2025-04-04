@@ -161,3 +161,29 @@ void calculate_crew_member_earnings_for_flight(sqlite3 *db, int tab_number, int 
         printf("Рейс %d для сотрудника %d не найден\n", flight_code, tab_number);
     }
 }
+
+void get_all_flights_for_crew(sqlite3* db, int tab_number) {
+    FlightReport2 report = retrieve_all_flights_data(db, tab_number);
+
+    printf("\nВсе рейсы для члена экипажа #%d:\n", tab_number);
+    printf("===============================================\n");
+    printf("Дата       | Код  | Груз (кг) | Пасс. | Длит. | Стоимость   | Тип\n");
+    printf("---------------------------------------------------------------\n");
+
+    if (report.data_exists) {
+        for (int i = 0; i < report.count; i++) {
+            FlightRecord* r = &report.records[i];
+            printf("%-10s | %-4d | %-9.2f | %-5d | %-5.1f | %-11.2f | %s\n",
+                   r->date, r->flight_code, r->cargo_weight,
+                   r->passengers_count, r->flight_duration,
+                   r->flight_cost, r->is_special ? "Спецрейс" : "Обычный");
+        }
+        printf("===============================================\n");
+        printf("Всего найдено рейсов: %d\n", report.count);
+    } else {
+        printf("Рейсы не найдены\n");
+    }
+
+    // Освобождение памяти
+    if (report.data_exists) free(report.records);
+}

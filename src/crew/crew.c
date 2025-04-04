@@ -276,56 +276,62 @@ EarningsRecordForFlight retrieve_earnings_data_for_flight(sqlite3 *db, int tab_n
 }
 
 // Функция для получения информации о всех рейсах члена экипажа
-void get_all_flights_for_crew(sqlite3 *db, int tab_number) {
-    sqlite3_stmt *stmt;
-    const char *query = "SELECT f.date, f.flight_code, f.cargo_weight, f.passengers_count, "
-                        "f.flight_duration, f.flight_cost, f.is_special "
-                        "FROM Flight f "
-                        "JOIN Crew_member cm ON f.helicopter_number = cm.helicopter_number "
-                        "WHERE cm.tab_number = ? "
-                        "ORDER BY f.date";
-    
-    // Подготовка SQL-запроса
+FlightReport2 retrieve_all_flights_data(sqlite3* db, int tab_number) {
+    sqlite3_stmt* stmt;
+    FlightReport2 report = {0};
+    const char* query =
+            "SELECT f.date, f.flight_code, f.cargo_weight, f.passengers_count, "
+            "f.flight_duration, f.flight_cost, f.is_special "
+            "FROM Flight f "
+            "JOIN Crew_member cm ON f.helicopter_number = cm.helicopter_number "
+            "WHERE cm.tab_number = ? "
+            "ORDER BY f.date";
+
     if (sqlite3_prepare_v2(db, query, -1, &stmt, NULL) != SQLITE_OK) {
-        printf("Ошибка при подготовке запроса: %s\n", sqlite3_errmsg(db));
-        return;
+        fprintf(stderr, "Ошибка подготовки запроса: %s\n", sqlite3_errmsg(db));
+        return report;
     }
-    
-    // Привязка параметров
+
     sqlite3_bind_int(stmt, 1, tab_number);
-    
-    // Выполнение запроса и обработка результатов
-    printf("Все рейсы для члена экипажа с табельным номером %d:\n", tab_number);
-    printf("Дата\t\tКод\tГруз\tПассажиры\tДлительность\tСтоимость\tТип\n");
-    
-    int flight_count = 0;
-    
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        const char *date = (const char*)sqlite3_column_text(stmt, 0);
-        int flight_code = sqlite3_column_int(stmt, 1);
-        double cargo_weight = sqlite3_column_double(stmt, 2);
-        int passengers_count = sqlite3_column_int(stmt, 3);
-        double flight_duration = sqlite3_column_double(stmt, 4);
-        double flight_cost = sqlite3_column_double(stmt, 5);
-        int is_special = sqlite3_column_int(stmt, 6);
-        
-        printf("%s\t%d\t%.2f\t%d\t\t%.2f\t\t%.2f\t\t%s\n", 
-               date, flight_code, cargo_weight, passengers_count, 
-               flight_duration, flight_cost, is_special ? "Спецрейс" : "Обычный");
-        
-        flight_count++;
+
+    // Первый проход для подсчета записей
+    while (sqlite3_step(stmt) == SQLITE_ROW) report.count++;
+    sqlite3_reset(stmt);
+
+    if (report.count == 0) {
+        sqlite3_finalize(stmt);
+        return report;
     }
-    
-    if (flight_count == 0) {
-        printf("Рейсы для члена экипажа с табельным номером %d не найдены.\n", tab_number);
+
+    // Выделение памяти
+    report.records = malloc(sizeof(FlightRecord) * report.count);
+    if (!report.records) {
+        sqlite3_finalize(stmt);
+        report.count = 0;
+        return report;
     }
-    
-    // Освобождение ресурсов
+
+    // Заполнение данных
+    for (int i = 0; i < report.count; i++) {
+        sqlite3_step(stmt);
+
+        // Обработка строковых полей
+        strncpy(report.records[i].date, (const char*)sqlite3_column_text(stmt, 0), 10);
+        report.records[i].flight_code = sqlite3_column_int(stmt, 1);
+        report.records[i].cargo_weight = sqlite3_column_double(stmt, 2);
+        report.records[i].passengers_count = sqlite3_column_int(stmt, 3);
+        report.records[i].flight_duration = sqlite3_column_double(stmt, 4);
+        report.records[i].flight_cost = sqlite3_column_double(stmt, 5);
+        report.records[i].is_special = sqlite3_column_int(stmt, 6);
+    }
+
+    report.data_exists = 1;
     sqlite3_finalize(stmt);
+    return report;
 }
 
 // Функция для обновления личной информации члена экипажа
-int update_crew_member_info(sqlite3 *db, int tab_number) {
+void update_crew_member_info(sqlite3 *db, int tab_number) {
     char new_value[100];
     
     // Проверка существования члена экипажа
@@ -334,7 +340,6 @@ int update_crew_member_info(sqlite3 *db, int tab_number) {
     
     if (sqlite3_prepare_v2(db, check_query, -1, &check_stmt, NULL) != SQLITE_OK) {
         printf("Ошибка при подготовке запроса: %s\n", sqlite3_errmsg(db));
-        return 1;
     }
     
     sqlite3_bind_int(check_stmt, 1, tab_number);
@@ -344,7 +349,6 @@ int update_crew_member_info(sqlite3 *db, int tab_number) {
         if (count == 0) {
             printf("Член экипажа с табельным номером %d не существует.\n", tab_number);
             sqlite3_finalize(check_stmt);
-            return 1;
         }
     }
     
@@ -367,7 +371,6 @@ int update_crew_member_info(sqlite3 *db, int tab_number) {
     
     if (sqlite3_prepare_v2(db, update_query, -1, &update_stmt, NULL) != SQLITE_OK) {
         printf("Ошибка при подготовке запроса обновления: %s\n", sqlite3_errmsg(db));
-        return 1;
     }
     
     sqlite3_bind_text(update_stmt, 1, new_value, -1, SQLITE_STATIC);
@@ -376,12 +379,10 @@ int update_crew_member_info(sqlite3 *db, int tab_number) {
     if (sqlite3_step(update_stmt) != SQLITE_DONE) {
         printf("Ошибка при обновлении адреса: %s\n", sqlite3_errmsg(db));
         sqlite3_finalize(update_stmt);
-        return 1;
     }
     
     printf("Адрес успешно обновлен.\n");
     
     // Освобождение ресурсов
     sqlite3_finalize(update_stmt);
-    return 0;
 }

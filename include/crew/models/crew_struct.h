@@ -78,4 +78,11 @@ typedef struct {
     int data_exists;
 } EarningsRecordForFlight;
 
+// Структура для хранения полного отчета
+typedef struct {
+    FlightRecord* records;
+    int count;
+    int data_exists;
+} FlightReport2;
+
 #endif
