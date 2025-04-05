@@ -68,4 +68,13 @@ typedef struct {
     int crew_count;
 } HelicopterWithCrewData;
 
+// Структура для хранения данных о вертолете
+typedef struct {
+    int helicopter_number;
+    char* model;
+    int num_flights;
+    double total_cargo_weight;
+    double total_earnings;
+} HelicopterSummary;
+
 #endif

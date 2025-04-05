@@ -9,5 +9,6 @@ void get_flights_hours_after_repair(sqlite3 *db);
 void get_special_flights_summary(sqlite3 *db);
 void get_max_earning_crew(sqlite3 *db);
 void get_helicopter_with_most_flights(sqlite3 *db);
+void get_normal_flights_summary(sqlite3 *db);
 
 #endif /* COMMANDER_INTERFACE_H */

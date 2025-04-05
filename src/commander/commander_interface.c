@@ -147,3 +147,26 @@ void get_helicopter_with_most_flights(sqlite3 *db) {
         free(data);
     }
 }
+
+void get_normal_flights_summary(sqlite3 *db) {
+    int count = 0;
+    HelicopterSummary* data = retrieve_normal_flights_data(db, &count);
+
+    if (!data) {
+        printf("Данные по обычным рейсам не найдены\n");
+        return;
+    }
+
+    printf("=== Сводка по обычным рейсам ===\n");
+    for (int i = 0; i < count; i++) {
+        printf("Вертолет %d\n", data[i].helicopter_number);
+        printf("Модель: %s\n", data[i].model);
+        printf("Количество рейсов: %d\n", data[i].num_flights);
+        printf("Общий вес грузов: %.2f кг\n", data[i].total_cargo_weight);
+        printf("Суммарный заработок: %.2f $\n\n", data[i].total_earnings);
+
+        free(data[i].model);
+    }
+
+    free(data);
+}
