@@ -29,6 +29,7 @@ void commander_interface(sqlite3 *db) {
                     printf("5. Вертолет с макс кол-во рейсов\n");
                     printf("6. Данные по вертолетам, проводившим обычные рейсы\n");
                     printf("7. Расчет дохода летчика за указанный период\n");
+                    printf("8. Детали дохода летчика по каждому рейсу/спецрейсу\n");
                     printf("0. Вернуться в главное меню\n");
                     printf("Введите ваш выбор: ");
                     scanf("%d", &choice);
@@ -56,6 +57,8 @@ void commander_interface(sqlite3 *db) {
                             break;
                         case 7:
                             get_pilot_earnings_by_period(db);
+                        case 8:
+                            get_pilot_earnings_by_flights(db);
                         default:
                             printf("Неверный выбор. Попробуйте снова.\n");
                     }

@@ -848,3 +848,105 @@ PilotEarnings retrieve_pilot_earnings(sqlite3 *db, int pilot_id, const char* sta
     sqlite3_finalize(stmt);
     return earnings;
 }
+
+DetailedPilotEarnings retrieve_pilot_earnings_by_flights(sqlite3 *db, int pilot_id, const char* start_date, 
+    const char* end_date, int flight_type, int* flights_count) {
+sqlite3_stmt *stmt;
+DetailedPilotEarnings earnings = {0};
+earnings.pilot_id = pilot_id;
+earnings.pilot_name = NULL;
+earnings.total_earnings = 0.0;
+earnings.flight_count = 0;
+earnings.flights = NULL;
+*flights_count = 0;
+
+// Составление SQL запроса в зависимости от типа рейсов
+const char *sql_base = 
+"SELECT CM.tab_number, CM.last_name, "
+"F.flight_code, F.date, F.is_special, F.flight_cost, "
+"CASE WHEN F.is_special = 1 THEN F.flight_cost * 0.10 ELSE F.flight_cost * 0.05 END as pilot_earnings "
+"FROM Flight F "
+"JOIN Crew_member CM ON F.helicopter_number = CM.helicopter_number "
+"WHERE CM.tab_number = ? "
+"AND F.date BETWEEN ? AND ? ";
+
+// Добавление условия фильтрации по типу рейса, если указано
+const char *sql_all = "";
+const char *sql_normal = "AND F.is_special = 0 ";
+const char *sql_special = "AND F.is_special = 1 ";
+const char *sql_order = "ORDER BY F.date";
+
+// Выбор соответствующего условия фильтрации
+const char *sql_filter;
+if (flight_type == -1) sql_filter = sql_all;
+else if (flight_type == 0) sql_filter = sql_normal;
+else sql_filter = sql_special;
+
+// Соединение частей запроса
+char sql[512]; // Буфер для полного запроса
+snprintf(sql, sizeof(sql), "%s%s%s", sql_base, sql_filter, sql_order);
+
+if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) {
+fprintf(stderr, "Ошибка подготовки запроса: %s\n", sqlite3_errmsg(db));
+return earnings;
+}
+
+// Привязка параметров
+sqlite3_bind_int(stmt, 1, pilot_id);
+sqlite3_bind_text(stmt, 2, start_date, -1, SQLITE_STATIC);
+sqlite3_bind_text(stmt, 3, end_date, -1, SQLITE_STATIC);
+
+// Первый проход для подсчета количества рейсов
+while (sqlite3_step(stmt) == SQLITE_ROW) {
+(*flights_count)++;
+
+// Если это первая запись, сохраняем данные о пилоте
+if (earnings.pilot_name == NULL) {
+earnings.pilot_id = sqlite3_column_int(stmt, 0);
+const char* name = (const char*)sqlite3_column_text(stmt, 1);
+earnings.pilot_name = name ? strdup(name) : strdup("Неизвестно");
+}
+}
+
+// Если рейсы не найдены, возвращаем пустую структуру
+if (*flights_count == 0) {
+sqlite3_finalize(stmt);
+return earnings;
+}
+
+// Выделяем память для хранения информации о рейсах
+earnings.flights = (FlightEarning*)malloc(sizeof(FlightEarning) * (*flights_count));
+if (!earnings.flights) {
+sqlite3_finalize(stmt);
+free(earnings.pilot_name);
+earnings.pilot_name = NULL;
+fprintf(stderr, "Ошибка выделения памяти\n");
+return earnings;
+}
+
+// Сброс запроса для повторного выполнения
+sqlite3_reset(stmt);
+
+// Второй проход для заполнения данных
+int i = 0;
+earnings.flight_count = *flights_count;
+while (sqlite3_step(stmt) == SQLITE_ROW && i < *flights_count) {
+// Данные о рейсе
+earnings.flights[i].flight_code = sqlite3_column_int(stmt, 2);
+
+const char* date = (const char*)sqlite3_column_text(stmt, 3);
+earnings.flights[i].flight_date = date ? strdup(date) : strdup("N/A");
+
+earnings.flights[i].is_special = sqlite3_column_int(stmt, 4);
+earnings.flights[i].flight_cost = sqlite3_column_double(stmt, 5);
+earnings.flights[i].pilot_earnings = sqlite3_column_double(stmt, 6);
+
+// Суммируем общий заработок
+earnings.total_earnings += earnings.flights[i].pilot_earnings;
+
+i++;
+}
+
+sqlite3_finalize(stmt);
+return earnings;
+}
