@@ -25,7 +25,7 @@ HelicopterWithCrewData* get_helicopter_with_crew_most_flights(sqlite3 *db);
 HelicopterSummary* retrieve_normal_flights_data(sqlite3 *db, int* result_count);
 
 // Обновить данные экипажа
-int update_crew_member(sqlite3 *db);
+int update_crew_member_db(sqlite3 *db, int tab_number, const char *field, const char *new_value);
 
 // Обновить данные о рейсе
 int update_flight(sqlite3 *db);

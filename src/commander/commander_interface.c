@@ -170,3 +170,39 @@ void get_normal_flights_summary(sqlite3 *db) {
 
     free(data);
 }
+
+void update_crew_member(sqlite3 *db) {
+    int tab_number;
+    char field[50];
+    char new_value[100];
+
+    // Ввод данных
+    printf("Табельный номер: ");
+    if (scanf("%d", &tab_number) != 1) {
+        printf("Ошибка ввода номера\n");
+        while(getchar() != '\n'); // Очистка буфера
+        return;
+    }
+
+    printf("Поле для изменения (last_name/position/birth_year/address/helicopter_number): ");
+    if (scanf("%49s", field) != 1) {
+        printf("Ошибка ввода поля\n");
+        return;
+    }
+
+    printf("Новое значение: ");
+    if (scanf("%99s", new_value) != 1) {
+        printf("Ошибка ввода значения\n");
+        return;
+    }
+
+    // Вызов логической части
+    int success = update_crew_member_db(db, tab_number, field, new_value);
+
+    // Вывод результата
+    if (success) {
+        printf("Данные успешно обновлены\n");
+    } else {
+        printf("Ошибка обновления. Проверьте введенные данные\n");
+    }
+}
