@@ -7,8 +7,7 @@ void commander_interface(sqlite3 *db) {
     int choice;
     while (1) {
         // Главное меню для командира
-        printf("\nВы находитесь в интерфейсе для командира.\n");
-        printf("Выберите операцию с базой данных:\n");
+        printf("Выберите операцию:\n");
         printf("1. SELECT (Просмотр данных)\n");
         printf("2. UPDATE (Обновление данных)\n");
         printf("3. INSERT (Добавление данных)\n");
@@ -139,14 +138,12 @@ void commander_interface(sqlite3 *db) {
 
 // Интерфейс для Crew Member
 void crew_member_interface(sqlite3 *db, int tab_number) {
-    printf("Вы находитесь в интерфейсе для члена экипажа.\n");
     int choice;
     char start_date[11], end_date[11];
     int flight_code;
 
     // Основной цикл меню
     while (1) {
-        printf("\nВы находитесь в интерфейсе для члена экипажа.\n");
         printf("Выберите операцию:\n");
         printf("1. Просмотреть свою информацию\n");
         printf("2. Просмотреть информацию о вертолете\n");

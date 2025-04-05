@@ -15,6 +15,9 @@ typedef struct {
 int main() {
     sqlite3 *db;
     int tab_number;
+    printf("Добро пожаловать в управление отрядом групповых вертолетов!\n"
+           "Если вы хотите зайти за командира, то ваш табельный номер = 1\n"
+           "Если за обычного служащего, то ваш табельный номер = 2-12\n");
 
     // Ввод табельного номера
     printf("Введите ваш табельный номер: ");
@@ -60,10 +63,18 @@ int main() {
     // Завершение работы с запросом
     sqlite3_finalize(stmt);
 
+    if (user.position == COMMANDER) {
+
+    } else if (user.position == CREW_MEMBER) {
+
+    }
+
     // Определяем должность и показываем соответствующий интерфейс
     if (user.position == COMMANDER) {
+        printf("\nВы находитесь в интерфейсе для командира.\n");
         commander_interface(db);
     } else if (user.position == CREW_MEMBER) {
+        printf("Вы находитесь в интерфейсе для члена экипажа.\n");
         crew_member_interface(db, tab_number);
     }
 
