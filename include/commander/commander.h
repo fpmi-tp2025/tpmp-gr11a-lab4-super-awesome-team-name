@@ -24,6 +24,8 @@ HelicopterWithCrewData* get_helicopter_with_crew_most_flights(sqlite3 *db);
 // Данные по вертолетам проводившие обычный рейс
 HelicopterSummary* retrieve_normal_flights_data(sqlite3 *db, int* result_count);
 
+PilotEarnings retrieve_pilot_earnings(sqlite3 *db, int pilot_id, const char* start_date, const char* end_date);
+
 // Обновить данные экипажа
 int update_crew_member_db(sqlite3 *db, int tab_number, const char *field, const char *new_value);
 

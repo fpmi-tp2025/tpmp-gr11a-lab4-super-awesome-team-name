@@ -77,4 +77,11 @@ typedef struct {
     double total_earnings;
 } HelicopterSummary;
 
+typedef struct {
+    int pilot_id;         // Табельный номер летчика
+    char* pilot_name;     // ФИО летчика
+    double total_earnings; // Сумма заработанных денег
+    int flight_count;     // Количество рейсов
+} PilotEarnings;
+
 #endif

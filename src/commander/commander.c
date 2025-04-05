@@ -807,3 +807,43 @@ int delete_crew_member(sqlite3 *db) {
     sqlite3_finalize(stmt);
     return 0;
 }
+
+PilotEarnings retrieve_pilot_earnings(sqlite3 *db, int pilot_id, const char* start_date, const char* end_date) {
+    sqlite3_stmt *stmt;
+    PilotEarnings earnings = {0};
+    earnings.pilot_id = pilot_id;
+    earnings.pilot_name = NULL;
+    earnings.total_earnings = 0.0;
+    earnings.flight_count = 0;
+    
+    const char *sql =
+        "SELECT CM.tab_number, CM.last_name, "
+        "COUNT(F.flight_code), SUM(F.flight_cost) "
+        "FROM Flight F "
+        "JOIN Crew_member CM ON F.helicopter_number = CM.helicopter_number "
+        "WHERE CM.tab_number = ? "
+        "AND F.date BETWEEN ? AND ? "
+        "GROUP BY CM.tab_number";
+    
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) {
+        fprintf(stderr, "Ошибка подготовки запроса: %s\n", sqlite3_errmsg(db));
+        return earnings;
+    }
+    
+    // Привязка параметров
+    sqlite3_bind_int(stmt, 1, pilot_id);
+    sqlite3_bind_text(stmt, 2, start_date, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 3, end_date, -1, SQLITE_STATIC);
+    
+    // Выполнение запроса
+    if (sqlite3_step(stmt) == SQLITE_ROW) {
+        earnings.pilot_id = sqlite3_column_int(stmt, 0);
+        const char* name = (const char*)sqlite3_column_text(stmt, 1);
+        earnings.pilot_name = name ? strdup(name) : strdup("Неизвестно");
+        earnings.flight_count = sqlite3_column_int(stmt, 2);
+        earnings.total_earnings = sqlite3_column_double(stmt, 3);
+    }
+    
+    sqlite3_finalize(stmt);
+    return earnings;
+}
