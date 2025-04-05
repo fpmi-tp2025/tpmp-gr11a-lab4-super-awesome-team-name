@@ -818,7 +818,8 @@ PilotEarnings retrieve_pilot_earnings(sqlite3 *db, int pilot_id, const char* sta
     
     const char *sql =
         "SELECT CM.tab_number, CM.last_name, "
-        "COUNT(F.flight_code), SUM(F.flight_cost) "
+        "COUNT(F.flight_code), "
+        "SUM(CASE WHEN F.is_special = 1 THEN F.flight_cost * 0.10 ELSE F.flight_cost * 0.05 END) "
         "FROM Flight F "
         "JOIN Crew_member CM ON F.helicopter_number = CM.helicopter_number "
         "WHERE CM.tab_number = ? "
