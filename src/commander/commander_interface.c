@@ -111,3 +111,98 @@ void get_max_earning_crew(sqlite3 *db) {
                data.flights[i].flight_cost);
     }
 }
+
+void get_helicopter_with_most_flights(sqlite3 *db) {
+    // Вызываем логику
+    HelicopterWithCrewData *data = get_helicopter_with_crew_most_flights(db);
+    
+    if (!data) {
+        printf("Не удалось найти вертолет с максимальным количеством рейсов.\n");
+        return;
+    }
+    
+    // Выводим информацию о вертолете
+    printf("Номер вертолета: %d\n", data->helicopter.helicopter_number);
+    printf("Модель вертолета: %s\n", data->helicopter.helicopter_model);
+    printf("Количество рейсов: %d\n", data->helicopter.num_flights);
+    printf("Количество заработанных денег: %.2f$\n", data->helicopter.total_earnings);
+    
+    // Выводим информацию о экипаже
+    printf("Экипаж:\n");
+    for (int i = 0; i < data->crew_count; i++) {
+        printf("Табельный номер: %d, Фамилия: %s\n", 
+               data->crew_members[i].tab_number, 
+               data->crew_members[i].last_name);
+    }
+    
+    // Освобождаем память
+    if (data) {
+        free((void*)data->helicopter.helicopter_model);
+        
+        for (int i = 0; i < data->crew_count; i++) {
+            free((void*)data->crew_members[i].last_name);
+        }
+        
+        free(data->crew_members);
+        free(data);
+    }
+}
+
+void get_normal_flights_summary(sqlite3 *db) {
+    int count = 0;
+    HelicopterSummary* data = retrieve_normal_flights_data(db, &count);
+
+    if (!data) {
+        printf("Данные по обычным рейсам не найдены\n");
+        return;
+    }
+
+    printf("=== Сводка по обычным рейсам ===\n");
+    for (int i = 0; i < count; i++) {
+        printf("Вертолет %d\n", data[i].helicopter_number);
+        printf("Модель: %s\n", data[i].model);
+        printf("Количество рейсов: %d\n", data[i].num_flights);
+        printf("Общий вес грузов: %.2f кг\n", data[i].total_cargo_weight);
+        printf("Суммарный заработок: %.2f $\n\n", data[i].total_earnings);
+
+        free(data[i].model);
+    }
+
+    free(data);
+}
+
+void update_crew_member(sqlite3 *db) {
+    int tab_number;
+    char field[50];
+    char new_value[100];
+
+    // Ввод данных
+    printf("Табельный номер: ");
+    if (scanf("%d", &tab_number) != 1) {
+        printf("Ошибка ввода номера\n");
+        while(getchar() != '\n'); // Очистка буфера
+        return;
+    }
+
+    printf("Поле для изменения (last_name/position/birth_year/address/helicopter_number): ");
+    if (scanf("%49s", field) != 1) {
+        printf("Ошибка ввода поля\n");
+        return;
+    }
+
+    printf("Новое значение: ");
+    if (scanf("%99s", new_value) != 1) {
+        printf("Ошибка ввода значения\n");
+        return;
+    }
+
+    // Вызов логической части
+    int success = update_crew_member_db(db, tab_number, field, new_value);
+
+    // Вывод результата
+    if (success) {
+        printf("Данные успешно обновлены\n");
+    } else {
+        printf("Ошибка обновления. Проверьте введенные данные\n");
+    }
+}
