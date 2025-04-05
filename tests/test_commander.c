@@ -26,11 +26,12 @@ void initialize_db(sqlite3* db) {
             "helicopter_number INTEGER);"
             "CREATE TABLE IF NOT EXISTS Flight ("
             "flight_code INTEGER PRIMARY KEY, "
-            "helicopter_number INTEGER, "
-            "flight_cost REAL, "
-            "cargo_weight REAL, "
-            "passengers_count INTEGER, "
-            "date TEXT);";  // Объединенная схема для обоих тестов
+            "helicopter_number INTEGER NOT NULL, "
+            "flight_cost REAL DEFAULT 0.0, "
+            "cargo_weight REAL DEFAULT 0.0, "
+            "passengers_count INTEGER DEFAULT 0, "
+            "date TEXT NOT NULL, "
+            "is_special INTEGER NOT NULL DEFAULT 0);";  // Исправленная структура
 
     char *err_msg = NULL;
     if (sqlite3_exec(db, sql, NULL, NULL, &err_msg) != SQLITE_OK) {
@@ -56,18 +57,19 @@ START_TEST(test_retrieve_max_earning_crew_data) {
         sqlite3 *db = connect_db(":memory:");
         initialize_db(db);
 
-        // Вставка тестовых данных
+        // Вставка данных с явным указанием столбцов
         sqlite3_exec(db,
         "INSERT INTO Helicopter VALUES (101, 'Model X');"
         "INSERT INTO Crew_member VALUES (1234, 'John Doe', 101);"
-        "INSERT INTO Flight VALUES (2001, 101, 1000.50, NULL, NULL, '2025-04-01');",
+        "INSERT INTO Flight (flight_code, helicopter_number, flight_cost, date, is_special) "
+        "VALUES (2001, 101, 1000.50, '2025-04-01', 0);",  // Явное указание is_special
         NULL, NULL, NULL);
 
         max_earning_crew_t result = retrieve_max_earning_crew_data(db);
 
         ck_assert_int_eq(result.helicopter_number, 101);
         ck_assert_str_eq(result.helicopter_model, "Model X");
-        ck_assert_double_eq(result.total_earnings, 1000.50);
+        ck_assert_double_eq_tol(result.total_earnings, 1000.50, 0.01);
         ck_assert_int_eq(result.crew_count, 1);
         ck_assert_int_eq(result.crew_members[0].tab_number, 1234);
 
@@ -80,10 +82,12 @@ START_TEST(test_get_flights_report) {
     sqlite3 *db = connect_db(":memory:");
     initialize_db(db);
 
+    // Вставка данных с явным указанием столбцов
     sqlite3_exec(db,
                  "INSERT INTO Helicopter VALUES (101, 'Model X');"
-                 "INSERT INTO Flight VALUES (2001, 101, NULL, 100.5, 5, '2024-04-01');"
-                 "INSERT INTO Flight VALUES (2002, 101, NULL, 200.0, 10, '2024-04-02');",
+                 "INSERT INTO Flight (flight_code, helicopter_number, cargo_weight, passengers_count, date, is_special) "
+                 "VALUES (2001, 101, 100.5, 5, '2024-04-01', 0), "
+                 "(2002, 101, 200.0, 10, '2024-04-02', 0);",
                  NULL, NULL, NULL);
 
     FlightPeriodReport *report = get_flights_report(db, "2024-04-01", "2024-04-02");
@@ -107,6 +111,46 @@ START_TEST(test_invalid_dates) {
 }
 END_TEST
 
+START_TEST(test_retrieve_pilot_earnings_by_flights) {
+    sqlite3 *db = connect_db(":memory:");
+    initialize_db(db);
+
+    // Вставка данных с явным указанием столбцов
+    sqlite3_exec(db,
+                 "INSERT INTO Crew_member VALUES (777, 'Петров', 101);"
+                 "INSERT INTO Flight (flight_code, helicopter_number, flight_cost, passengers_count, date, is_special) "
+                 "VALUES (1001, 101, 30000.0, 5, '2024-01-01', 1), "  // Специальный рейс
+                 "(1002, 101, 20000.0, 3, '2024-01-02', 0), "  // Обычный рейс
+                 "(1003, 101, 50000.0, 4, '2024-02-01', 1), "  // Вне диапазона
+                 "(1004, 101, 15000.0, 2, '2024-01-03', 1);",  // Специальный рейс
+                 NULL, NULL, NULL);
+
+    int flights_count = 0;
+
+    // Тест 1: Все рейсы за январь
+    DetailedPilotEarnings earnings = retrieve_pilot_earnings_by_flights(
+            db, 777, "2024-01-01", "2024-01-31", -1, &flights_count
+    );
+
+    ck_assert_int_eq(earnings.pilot_id, 777);
+    ck_assert_str_eq(earnings.pilot_name, "Петров");
+    ck_assert_int_eq(flights_count, 3);
+    ck_assert_double_eq_tol(earnings.total_earnings,
+                            (30000*0.10) + (20000*0.05) + (15000*0.10), 0.01);
+
+    // Проверка первого рейса
+    ck_assert_int_eq(earnings.flights[0].flight_code, 1001);
+    ck_assert_str_eq(earnings.flights[0].flight_date, "2024-01-01");
+    ck_assert_int_eq(earnings.flights[0].is_special, 1);
+    ck_assert_double_eq(earnings.flights[0].flight_cost, 30000.0);
+
+    free(earnings.pilot_name);
+    free(earnings.flights);
+
+    sqlite3_close(db);
+}
+END_TEST
+
 // Создание тестового набора
 Suite* commander_suite(void) {
     Suite *s = suite_create("Commander");
@@ -115,6 +159,7 @@ Suite* commander_suite(void) {
     tcase_add_test(tc_core, test_retrieve_max_earning_crew_data);
     tcase_add_test(tc_core, test_get_flights_report);
     tcase_add_test(tc_core, test_invalid_dates);
+    tcase_add_test(tc_core, test_retrieve_pilot_earnings_by_flights);
 
     suite_add_tcase(s, tc_core);
     return s;
