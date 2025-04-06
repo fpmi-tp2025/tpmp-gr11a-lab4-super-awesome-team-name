@@ -40,6 +40,9 @@ int update_helicopter(sqlite3 *db);
 // Вставка работника в БД
 int insert_crew_member(sqlite3 *db);
 
+// Вставка вертолёта в БД
+int insert_helicopter(sqlite3 *db);
+
 // Удаление члена экипажа
 int delete_crew_member(sqlite3 *db);
 

@@ -97,6 +97,7 @@ void commander_interface(sqlite3 *db) {
                 while (1) {
                     printf("\nВы выбрали INSERT.\n");
                     printf("1. Добавить работника\n");
+                    printf("2. Добавить вертолёт\n");
                     printf("0. Вернуться в главное меню\n");
                     printf("Введите ваш выбор: ");
                     scanf("%d", &choice);
@@ -106,6 +107,9 @@ void commander_interface(sqlite3 *db) {
                     switch (choice) {
                         case 1:
                             insert_crew_member(db);
+                            break;
+                        case 2:
+                            insert_helicopter(db);
                             break;
                         default:
                             printf("Неверный выбор. Попробуйте снова.\n");

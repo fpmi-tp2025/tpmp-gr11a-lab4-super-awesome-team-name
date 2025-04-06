@@ -767,6 +767,123 @@ int insert_crew_member(sqlite3 *db) {
     return 0;
 }
 
+int insert_helicopter(sqlite3 *db) {
+    int helicopter_number, flight_resource;
+    char model[100], manufacture_date[20], last_repair_date[20];
+    char input[100];
+    float max_payload;
+    
+    // === helicopter_number ===
+    while (1) {
+        printf("Введите номер вертолёта (целое положительное число): ");
+        scanf("%s", input);
+        if (validate_number(input)) {
+            helicopter_number = atoi(input);
+            // Проверка, что такого номера ещё нет в базе
+            sqlite3_stmt *stmt;
+            const char *check_sql = "SELECT COUNT(*) FROM Helicopter WHERE helicopter_number = ?";
+            if (sqlite3_prepare_v2(db, check_sql, -1, &stmt, 0) != SQLITE_OK) {
+                printf("Ошибка подготовки запроса: %s\n", sqlite3_errmsg(db));
+                return 1;
+            }
+            sqlite3_bind_int(stmt, 1, helicopter_number);
+            if (sqlite3_step(stmt) == SQLITE_ROW) {
+                int count = sqlite3_column_int(stmt, 0);
+                sqlite3_finalize(stmt);
+                if (count > 0) {
+                    printf("Ошибка: вертолёт с таким номером уже существует.\n");
+                    continue;
+                }
+            } else {
+                sqlite3_finalize(stmt);
+                printf("Ошибка при проверке номера вертолёта.\n");
+                continue;
+            }
+            break;
+        } else {
+            printf("Ошибка: некорректный номер вертолёта.\n");
+        }
+    }
+    
+    // === model ===
+    printf("Введите модель вертолёта: ");
+    getchar(); // очистка буфера ввода
+    fgets(model, sizeof(model), stdin);
+    model[strcspn(model, "\n")] = 0; // удаляем символ новой строки
+    
+    // === manufacture_date ===
+    while (1) {
+        printf("Введите дату производства (YYYY-MM-DD): ");
+        scanf("%s", manufacture_date);
+        if (validate_date(manufacture_date)) {
+            break;
+        } else {
+            printf("Ошибка: некорректный формат даты. Используйте формат YYYY-MM-DD.\n");
+        }
+    }
+    
+    // === max_payload ===
+    while (1) {
+        printf("Введите максимальную грузоподъёмность (в кг): ");
+        scanf("%s", input);
+        if (validate_float(input)) {
+            max_payload = atof(input);
+            break;
+        } else {
+            printf("Ошибка: грузоподъёмность должна быть положительным числом.\n");
+        }
+    }
+    
+    // === last_repair_date ===
+    while (1) {
+        printf("Введите дату последнего ремонта (YYYY-MM-DD): ");
+        scanf("%s", last_repair_date);
+        if (validate_date(last_repair_date)) {
+            break;
+        } else {
+            printf("Ошибка: некорректный формат даты. Используйте формат YYYY-MM-DD.\n");
+        }
+    }
+    
+    // === flight_resource ===
+    while (1) {
+        printf("Введите ресурс полёта (целое положительное число): ");
+        scanf("%s", input);
+        if (validate_number(input)) {
+            flight_resource = atoi(input);
+            break;
+        } else {
+            printf("Ошибка: ресурс полёта должен быть целым положительным числом.\n");
+        }
+    }
+    
+    // === Вставка в базу ===
+    const char *sql = "INSERT INTO Helicopter (helicopter_number, model, manufacture_date, max_payload, last_repair_date, flight_resource) "
+                    "VALUES (?, ?, ?, ?, ?, ?)";
+    sqlite3_stmt *stmt;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) != SQLITE_OK) {
+        printf("Ошибка подготовки запроса: %s\n", sqlite3_errmsg(db));
+        return 1;
+    }
+    
+    sqlite3_bind_int(stmt, 1, helicopter_number);
+    sqlite3_bind_text(stmt, 2, model, -1, SQLITE_TRANSIENT);  // Изменено с SQLITE_STATIC на SQLITE_TRANSIENT
+    sqlite3_bind_text(stmt, 3, manufacture_date, -1, SQLITE_TRANSIENT);  // Изменено с SQLITE_STATIC на SQLITE_TRANSIENT
+    sqlite3_bind_double(stmt, 4, max_payload);
+    sqlite3_bind_text(stmt, 5, last_repair_date, -1, SQLITE_TRANSIENT);  // Изменено с SQLITE_STATIC на SQLITE_TRANSIENT
+    sqlite3_bind_int(stmt, 6, flight_resource);
+    
+    if (sqlite3_step(stmt) != SQLITE_DONE) {
+        printf("Ошибка при вставке: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        return 1;
+    }
+    
+    sqlite3_finalize(stmt);
+    printf("Вертолёт успешно добавлен.\n");
+    return 0;
+}
+
 // Удаление члена экипажа
 int delete_crew_member(sqlite3 *db) {
     int tab_number;
