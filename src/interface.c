@@ -120,6 +120,7 @@ void commander_interface(sqlite3 *db) {
                 while (1) {
                     printf("\nВы выбрали DELETE.\n");
                     printf("1. Удалить работника\n");
+                    printf("2. Удалить вертолёт\n");
                     printf("0. Вернуться в главное меню\n");
                     printf("Введите ваш выбор: ");
                     scanf("%d", &choice);
@@ -129,6 +130,9 @@ void commander_interface(sqlite3 *db) {
                     switch (choice) {
                         case 1:
                             delete_crew_member(db);
+                            break;
+                        case 2:
+                            delete_helicopter(db);
                             break;
                         default:
                             printf("Неверный выбор. Попробуйте снова.\n");

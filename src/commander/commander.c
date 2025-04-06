@@ -925,6 +925,153 @@ int delete_crew_member(sqlite3 *db) {
     return 0;
 }
 
+// Вспомогательная функция для получения ответа Да/Нет
+int get_yes_no() {
+    char response[10];
+    printf("(y/n): ");
+    scanf("%s", response);
+    
+    // Проверяем первый символ ответа
+    char first_char = response[0];
+    return (first_char == 'y' || first_char == 'Y' || first_char == '1');
+}
+
+// Удаление вертолёта
+int delete_helicopter(sqlite3 *db) {
+    int helicopter_number;
+    
+    // Запрос номера вертолёта
+    printf("Введите номер вертолёта для удаления: ");
+    scanf("%d", &helicopter_number);
+    
+    // Проверка, существует ли такой вертолёт в базе данных
+    if (!validate_helicopter(db, helicopter_number)) {
+        printf("Ошибка: Вертолёт с номером %d не найден.\n", helicopter_number);
+        return 1; // Завершаем функцию, если вертолёт не найден
+    }
+    
+    // Проверка, привязаны ли члены экипажа к этому вертолёту
+    int crew_count = check_crew_members_for_helicopter(db, helicopter_number);
+    if (crew_count > 0) {
+        printf("Внимание: К вертолёту с номером %d привязаны %d членов экипажа.\n", 
+               helicopter_number, crew_count);
+        printf("Удаление вертолёта повлечёт за собой удаление связанных записей!\n");
+        printf("Хотите продолжить? ");
+        
+        if (!get_yes_no()) {
+            printf("Операция отменена.\n");
+            return 0;
+        }
+    }
+    
+    // Проверка, есть ли полёты, связанные с этим вертолётом
+    int flight_count = check_flights_for_helicopter(db, helicopter_number);
+    if (flight_count > 0) {
+        printf("Внимание: С вертолётом номер %d связаны %d полётов.\n", 
+               helicopter_number, flight_count);
+        printf("Удаление вертолёта повлечёт за собой удаление связанных записей!\n");
+        printf("Хотите продолжить? ");
+        
+        if (!get_yes_no()) {
+            printf("Операция отменена.\n");
+            return 0;
+        }
+    }
+    
+    // Начинаем транзакцию
+    if (sqlite3_exec(db, "BEGIN TRANSACTION", 0, 0, 0) != SQLITE_OK) {
+        printf("Ошибка при начале транзакции: %s\n", sqlite3_errmsg(db));
+        return 1;
+    }
+    
+    int success = 1;
+    
+    // Удаление связанных членов экипажа, если они есть
+    if (crew_count > 0) {
+        const char *sql_delete_crew = "DELETE FROM Crew_member WHERE helicopter_number = ?";
+        sqlite3_stmt *stmt;
+        
+        if (sqlite3_prepare_v2(db, sql_delete_crew, -1, &stmt, 0) != SQLITE_OK) {
+            printf("Ошибка при подготовке запроса удаления членов экипажа: %s\n", sqlite3_errmsg(db));
+            success = 0;
+        } else {
+            sqlite3_bind_int(stmt, 1, helicopter_number);
+            
+            if (sqlite3_step(stmt) != SQLITE_DONE) {
+                printf("Ошибка при удалении членов экипажа: %s\n", sqlite3_errmsg(db));
+                success = 0;
+            }
+            
+            sqlite3_finalize(stmt);
+        }
+    }
+    
+    // Удаление связанных полётов, если они есть
+    if (success && flight_count > 0) {
+        const char *sql_delete_flights = "DELETE FROM Flight WHERE helicopter_number = ?";
+        sqlite3_stmt *stmt;
+        
+        if (sqlite3_prepare_v2(db, sql_delete_flights, -1, &stmt, 0) != SQLITE_OK) {
+            printf("Ошибка при подготовке запроса удаления полётов: %s\n", sqlite3_errmsg(db));
+            success = 0;
+        } else {
+            sqlite3_bind_int(stmt, 1, helicopter_number);
+            
+            if (sqlite3_step(stmt) != SQLITE_DONE) {
+                printf("Ошибка при удалении полётов: %s\n", sqlite3_errmsg(db));
+                success = 0;
+            }
+            
+            sqlite3_finalize(stmt);
+        }
+    }
+    
+    // Удаление самого вертолёта
+    if (success) {
+        const char *sql_delete_helicopter = "DELETE FROM Helicopter WHERE helicopter_number = ?";
+        sqlite3_stmt *stmt;
+        
+        if (sqlite3_prepare_v2(db, sql_delete_helicopter, -1, &stmt, 0) != SQLITE_OK) {
+            printf("Ошибка при подготовке запроса удаления вертолёта: %s\n", sqlite3_errmsg(db));
+            success = 0;
+        } else {
+            sqlite3_bind_int(stmt, 1, helicopter_number);
+            
+            if (sqlite3_step(stmt) != SQLITE_DONE) {
+                printf("Ошибка при удалении вертолёта: %s\n", sqlite3_errmsg(db));
+                success = 0;
+            }
+            
+            sqlite3_finalize(stmt);
+        }
+    }
+    
+    // Завершаем транзакцию
+    if (success) {
+        if (sqlite3_exec(db, "COMMIT", 0, 0, 0) != SQLITE_OK) {
+            printf("Ошибка при завершении транзакции: %s\n", sqlite3_errmsg(db));
+            success = 0;
+        }
+    } else {
+        sqlite3_exec(db, "ROLLBACK", 0, 0, 0);
+    }
+    
+    if (success) {
+        printf("Вертолёт с номером %d успешно удален", helicopter_number);
+        if (crew_count > 0) {
+            printf(", а также %d связанных членов экипажа", crew_count);
+        }
+        if (flight_count > 0) {
+            printf(" и %d связанных полётов", flight_count);
+        }
+        printf(".\n");
+        return 0;
+    } else {
+        printf("Операция удаления отменена из-за ошибок.\n");
+        return 1;
+    }
+}
+
 PilotEarnings retrieve_pilot_earnings(sqlite3 *db, int pilot_id, const char* start_date, const char* end_date) {
     sqlite3_stmt *stmt;
     PilotEarnings earnings = {0};

@@ -34,4 +34,13 @@ int validate_flight_code(sqlite3 *db, int flight_code);
 // Функция для проверки существования члена экипажа по табельному номеру
 int validate_crew_member(sqlite3 *db, int tab_number);
 
+// Проверка существования вертолёта
+int validate_helicopter(sqlite3 *db, int helicopter_number);
+
+// Проверка наличия членов экипажа, привязанных к вертолёту
+int check_crew_members_for_helicopter(sqlite3 *db, int helicopter_number);
+
+// Проверка наличия полётов, связанных с вертолётом
+int check_flights_for_helicopter(sqlite3 *db, int helicopter_number);
+
 #endif //TEAM_LAB4_VALIDATION_H
