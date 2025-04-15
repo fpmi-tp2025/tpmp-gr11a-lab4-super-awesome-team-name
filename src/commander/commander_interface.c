@@ -206,3 +206,100 @@ void update_crew_member(sqlite3 *db) {
         printf("Ошибка обновления. Проверьте введенные данные\n");
     }
 }
+
+//SELECT
+void get_pilot_earnings_by_period(sqlite3 *db) {
+    int pilot_id;
+    char start_date[11], end_date[11]; // Формат YYYY-MM-DD
+    
+    // Получение входных данных от пользователя
+    printf("Введите табельный номер летчика: ");
+    scanf("%d", &pilot_id);
+    
+    printf("Введите начальную дату (ГГГГ-ММ-ДД): ");
+    scanf("%10s", start_date);
+    
+    printf("Введите конечную дату (ГГГГ-ММ-ДД): ");
+    scanf("%10s", end_date);
+    
+    // Вызов логики для получения данных
+    PilotEarnings earnings = retrieve_pilot_earnings(db, pilot_id, start_date, end_date);
+    
+    // Вывод результатов
+    if (earnings.pilot_name == NULL) {
+        printf("Данные о доходах летчика с табельным номером %d за указанный период не найдены\n", pilot_id);
+        return;
+    }
+    
+    printf("=== Данные о доходах летчика ===\n");
+    printf("Табельный номер: %d\n", earnings.pilot_id);
+    printf("Фамилия: %s\n", earnings.pilot_name);
+    printf("Период: с %s по %s\n", start_date, end_date);
+    printf("Количество рейсов: %d\n", earnings.flight_count);
+    printf("Общий доход: %.2f $\n", earnings.total_earnings);
+    
+    // Освобождение памяти
+    free(earnings.pilot_name);
+}
+
+void get_pilot_earnings_by_flights(sqlite3 *db) {
+    int pilot_id;
+    int flight_type = -1; // -1: все рейсы, 0: обычные, 1: спецрейсы
+    char start_date[11], end_date[11]; // Формат YYYY-MM-DD
+    int flights_count = 0;
+    
+    // Получение входных данных от пользователя
+    printf("Введите табельный номер летчика: ");
+    scanf("%d", &pilot_id);
+    
+    printf("Введите начальную дату (ГГГГ-ММ-ДД): ");
+    scanf("%10s", start_date);
+    
+    printf("Введите конечную дату (ГГГГ-ММ-ДД): ");
+    scanf("%10s", end_date);
+    
+    printf("Выберите тип рейсов (0 - обычные, 1 - спецрейсы, -1 - все): ");
+    scanf("%d", &flight_type);
+    
+    // Вызов логики для получения данных
+    DetailedPilotEarnings earnings = retrieve_pilot_earnings_by_flights(db, pilot_id, start_date, end_date, flight_type, &flights_count);
+    
+    // Вывод результатов
+    if (earnings.pilot_name == NULL) {
+        printf("Данные о доходах летчика с табельным номером %d за указанный период не найдены\n", pilot_id);
+        return;
+    }
+    
+    // Определение типа рейсов для вывода
+    char* flight_type_str;
+    if (flight_type == -1) flight_type_str = "всех";
+    else if (flight_type == 0) flight_type_str = "обычных";
+    else flight_type_str = "специальных";
+    
+    printf("=== Данные о доходах летчика за %s рейсы ===\n", flight_type_str);
+    printf("Табельный номер: %d\n", earnings.pilot_id);
+    printf("Фамилия: %s\n", earnings.pilot_name);
+    printf("Период: с %s по %s\n", start_date, end_date);
+    printf("Количество рейсов: %d\n", earnings.flight_count);
+    printf("Общий доход: %.2f $\n\n", earnings.total_earnings);
+    
+    // Детальная информация по каждому рейсу
+    printf("Детализация по рейсам:\n");
+    printf("%-12s %-12s %-15s %-15s %-15s\n", "Код рейса", "Дата", "Тип", "Стоимость($)", "Доход пилота($)");
+    printf("-------------------------------------------------------------------------\n");
+    
+    for (int i = 0; i < flights_count; i++) {
+        printf("%-12d %-12s %-15s %-15.2f %-15.2f\n", 
+               earnings.flights[i].flight_code,
+               earnings.flights[i].flight_date,
+               earnings.flights[i].is_special ? "Спецрейс" : "Обычный",
+               earnings.flights[i].flight_cost,
+               earnings.flights[i].pilot_earnings);
+               
+        free(earnings.flights[i].flight_date); // Освобождение памяти для даты
+    }
+    
+    // Освобождение памяти
+    free(earnings.pilot_name);
+    free(earnings.flights);
+}

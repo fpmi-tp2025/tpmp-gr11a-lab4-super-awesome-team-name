@@ -160,3 +160,65 @@ int validate_crew_member(sqlite3 *db, int tab_number) {
 
     return (count > 0);  // Если член экипажа найден в базе
 }
+
+int validate_helicopter(sqlite3 *db, int helicopter_number) {
+    sqlite3_stmt *stmt;
+    int exists = 0;
+    const char *sql = "SELECT COUNT(*) FROM Helicopter WHERE helicopter_number = ?";
+    
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) != SQLITE_OK) {
+        printf("Ошибка при подготовке запроса: %s\n", sqlite3_errmsg(db));
+        return 0;
+    }
+    
+    sqlite3_bind_int(stmt, 1, helicopter_number);
+    
+    if (sqlite3_step(stmt) == SQLITE_ROW) {
+        exists = sqlite3_column_int(stmt, 0);
+    }
+    
+    sqlite3_finalize(stmt);
+    return exists > 0;
+}
+
+// Проверка наличия членов экипажа, привязанных к вертолёту
+int check_crew_members_for_helicopter(sqlite3 *db, int helicopter_number) {
+    sqlite3_stmt *stmt;
+    int count = 0;
+    const char *sql = "SELECT COUNT(*) FROM Crew_member WHERE helicopter_number = ?";
+    
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) != SQLITE_OK) {
+        printf("Ошибка при подготовке запроса: %s\n", sqlite3_errmsg(db));
+        return -1;
+    }
+    
+    sqlite3_bind_int(stmt, 1, helicopter_number);
+    
+    if (sqlite3_step(stmt) == SQLITE_ROW) {
+        count = sqlite3_column_int(stmt, 0);
+    }
+    
+    sqlite3_finalize(stmt);
+    return count;
+}
+
+// Проверка наличия полётов, связанных с вертолётом
+int check_flights_for_helicopter(sqlite3 *db, int helicopter_number) {
+    sqlite3_stmt *stmt;
+    int count = 0;
+    const char *sql = "SELECT COUNT(*) FROM Flight WHERE helicopter_number = ?";
+    
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) != SQLITE_OK) {
+        printf("Ошибка при подготовке запроса: %s\n", sqlite3_errmsg(db));
+        return -1;
+    }
+    
+    sqlite3_bind_int(stmt, 1, helicopter_number);
+    
+    if (sqlite3_step(stmt) == SQLITE_ROW) {
+        count = sqlite3_column_int(stmt, 0);
+    }
+    
+    sqlite3_finalize(stmt);
+    return count;
+}
